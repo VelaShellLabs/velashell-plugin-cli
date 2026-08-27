@@ -1,0 +1,2 @@
+<!-- 同 Directory.Build.props:切断向上查找,理由见那边。 -->
+<Project />

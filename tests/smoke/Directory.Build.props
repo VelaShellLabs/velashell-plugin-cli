@@ -1,0 +1,14 @@
+<!--
+  故意留空。作用是**切断 MSBuild 向上查找**:没有它,这个夹具会吃到仓库根的
+  Directory.Build.props(TargetFramework、EnablePreviewFeatures、NoWarn…),
+  于是它验的就不再是"插件作者那边"的情况了。
+
+  这个冒烟的全部价值就在这一点上:插件工程是**仓库外环境**,仓库内的构建约定一条也
+  吃不到。历史上正是它先发现了两个坑 ——
+    · SDK 带 RequiresPreviewFeatures,插件工程不开预览开关就全线 CA2252
+      (于是 VelaShell.PluginSdk.Build.props 里有了 EnablePreviewFeatures 默认值);
+    · NuGet 默认不传递 build 资产,Avalonia 的 AXAML 编译器到不了插件工程
+      (于是 .Build 的 PackageReference 上有了 PrivateAssets="none")。
+  两个坑都只有在"什么都不继承"的前提下才会显形。
+-->
+<Project />

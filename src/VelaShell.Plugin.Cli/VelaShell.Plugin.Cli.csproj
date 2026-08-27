@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>VelaShell.Plugin.Cli</RootNamespace>
+    <Description>VelaShell 插件开发命令行工具(vela-plugin):校验清单、打 .vpx 包、生成签名密钥并签名/验签、把插件工程输出挂进本机 VelaShell 做开发调试。</Description>
+    <PackageId>VelaShell.Plugin.Cli</PackageId>
+    <PackageTags>velashell;plugin;cli;dotnet-tool;vpx</PackageTags>
+
+    <!-- 打成 dotnet tool:`dotnet tool install -g VelaShell.Plugin.Cli` 后即有 `vela-plugin` 命令。
+         同一份构建产物还会被 VelaShell.PluginSdk.Build 包收进 tools/,
+         让 `dotnet build -t:PackVpx` 无需安装任何工具就能出包。 -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>vela-plugin</ToolCommandName>
+
+    <!-- 命令行工具没有公开 API 面,不产出 XML 文档(也就不需要给内部类型逐个写文档注释)。 -->
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      容器读写与清单校验都在契约 SDK 里:宿主装包与工具出包必须走同一份实现,
+      否则「本机打得出、宿主装不上」这种事迟早发生。
+
+      拆库(2026-08-27)之后这里从 ProjectReference 变成 PackageReference ——
+      SDK 在 joesdu/velashell-plugin-sdk,按 NuGet 取。版本旋钮
+      VelaSdkDependencyVersion 在仓库根 Directory.Build.props,抬它才吃到新契约。
+
+      注:SDK 的 dll 会随之复制进本工程的输出目录,这是**需要的** ——
+      VelaShell.PluginSdk.Build 把整个输出目录收进包的 tools/net11.0/,
+      `dotnet exec VelaShell.Plugin.Cli.dll` 在插件作者机器上要靠它才跑得起来。
+    -->
+    <PackageReference Include="VelaShell.PluginSdk" Version="$(VelaSdkDependencyVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 装包链路(签名策略、换目录、版本挑选)全是 internal,测试要看得见它们。
+         不带公钥是可以的:本仓库的程序集 Debug/Release 都不签名(强名签名只开在
+         velashell-plugin-sdk 那一支),因此友元声明不需要公钥,Release 也不会炸 CS1726。 -->
+    <InternalsVisibleTo Include="VelaShell.Plugin.Cli.Tests" />
+  </ItemGroup>
+
+</Project>

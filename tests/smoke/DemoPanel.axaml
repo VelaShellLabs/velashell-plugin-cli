@@ -1,0 +1,24 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Smoke.DemoPanel">
+  <!-- 这个文件的存在本身就是被验的东西:AXAML 要被**编译期**处理,
+       而那个编译器来自 Avalonia 包的 build 资产 —— 它能不能传递到插件工程,
+       正是 .Build 包上 PrivateAssets="none" 那一条在管的事。 -->
+  <Border Background="{DynamicResource VelaBgSurface}" Padding="16">
+    <StackPanel Spacing="12">
+      <TextBlock Text="Smoke"
+                 Foreground="{DynamicResource VelaTextPrimary}"
+                 FontFamily="{DynamicResource VelaUiFont}"
+                 FontSize="{DynamicResource VelaFontSize14}"
+                 FontWeight="SemiBold" />
+      <TextBlock x:Name="StatusText"
+                 Text="Ready."
+                 Foreground="{DynamicResource VelaTextSecondary}"
+                 FontSize="{DynamicResource VelaFontSize12}"
+                 TextWrapping="Wrap" />
+      <Button x:Name="CountSessionsButton"
+              Content="Count sessions"
+              HorizontalAlignment="Left" />
+    </StackPanel>
+  </Border>
+</UserControl>

@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="MSTest.TestAdapter" />
+    <PackageReference Include="MSTest.TestFramework" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 装包链路:下载校验、签名策略、换目录、版本挑选。这些不是"契约",但它们决定
+         `vela-plugin install` 会不会把一个不该装的东西装进用户的插件目录 ——
+         错了的代价与契约错了同级,所以一样有回归测试。
+         CLI 用 InternalsVisibleTo 把 internal 面开给本工程(见其 csproj 的注释)。 -->
+    <ProjectReference Include="..\..\src\VelaShell.Plugin.Cli\VelaShell.Plugin.Cli.csproj" />
+  </ItemGroup>
+
+</Project>

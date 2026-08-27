@@ -1,0 +1,15 @@
+<Project>
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- 测试框架。本目录只剩契约测试(.vpx 容器格式与 plugin.json 清单解析),
+         它不碰 Avalonia、不碰任何插件的第三方依赖,所以这里也就只有这四条。
+         插件自己的单元测试连同插件一起搬去了 joesdu/velashell-plugins,
+         Avalonia / AWSSDK.S3 / NSubstitute 那几条随之搬走。 -->
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.3.3" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.3.3" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+  </ItemGroup>
+</Project>

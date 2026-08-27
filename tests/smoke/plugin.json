@@ -1,0 +1,21 @@
+{
+  "id": "velashell.smoke",
+  "version": "0.1.0",
+  "displayName": "Smoke",
+  "description": "CI smoke fixture: exercises the VelaShell.PluginSdk.Build package end to end.",
+  "author": "CI",
+  "publisher": "velashell",
+  "entry": "Smoke.dll",
+  "apiLevel": 1,
+  "hostMode": "inProcess",
+  "activationEvents": [ "onCommand:velashell.smoke.open-panel" ],
+  "contributes": {
+    "commands": [
+      {
+        "id": "velashell.smoke.open-panel",
+        "title": "Smoke: Open panel",
+        "category": "Smoke"
+      }
+    ]
+  }
+}

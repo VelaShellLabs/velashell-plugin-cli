@@ -1,0 +1,100 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <PackageId>VelaShell.PluginSdk.Build</PackageId>
+    <Description>VelaShell 插件工程的构建支持包:一次引用即得到契约程序集、与宿主版本一致的 Avalonia、共享程序集不落地的处理、清单编译期校验,以及 `dotnet build -t:PackVpx` 一步出 .vpx 包。插件工程只需引用本包。</Description>
+    <PackageTags>velashell;plugin;msbuild;vpx;sdk</PackageTags>
+
+    <!-- 本包不含任何程序集,只有 MSBuild 逻辑与 tools/ 下的打包器。 -->
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <!-- 没有程序集自然也没有 .pdb。历史教训:曾经因为上层统一开了 IncludeSymbols,
+         这里生成出一个只含 nuspec 的空 .snupkg,nuget.org 收到直接 400
+         "The package does not contain any symbol (.pdb) files.",把整批推送拦腰截断
+         (run 32114870350:前四个包已推上去,第五个再没轮到)。显式关掉,别再让它复活。 -->
+    <IncludeSymbols>false</IncludeSymbols>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- NU5128:有依赖但无 lib/ 目录。对纯 MSBuild 包是正常形态。 -->
+    <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddVelaCliToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 插件作者引用本包即得到这两项,且都以 exclude="Runtime" 的形式传递 ——
+         编译期可见,运行时不复制。原因见 PluginAssemblyLoadContext:
+         VelaShell.PluginSdk 与 Avalonia* 必须与装载方是同一份程序集。 -->
+    <!-- PrivateAssets="none" 不能省:NuGet 默认不让 build/analyzers 资产传递给下游,
+         而 Avalonia 的 **AXAML 编译器就在它的 build 资产里** —— 少了这一条,
+         插件工程里的 .axaml 根本不会被编译,现象是运行时找不到控件而不是构建报错。 -->
+    <PackageReference Include="Avalonia" Version="[$(VelaAvaloniaVersion)]" ExcludeAssets="runtime" PrivateAssets="none" />
+    <!-- 拆库(2026-08-27)之后契约 SDK 也走 NuGet(原先是 ProjectReference)。
+         版本旋钮 VelaSdkDependencyVersion 在仓库根 Directory.Build.props。
+         这一条同时是下面 VerifyAvaloniaVersionPin 的**信息来源**:SDK 包的
+         buildTransitive props 会把权威 Avalonia 版本导出成 $(VelaSdkPinnedAvaloniaVersion)。 -->
+    <PackageReference Include="VelaShell.PluginSdk" Version="$(VelaSdkDependencyVersion)" ExcludeAssets="runtime" PrivateAssets="none" />
+    <!-- 打包器(vela-plugin)随本包分发到 tools/:插件工程无需安装任何全局工具即可出包。
+         只借它的构建顺序与产物,不产生包依赖、不引用其程序集。
+         这正是「.Build 与 vela-plugin 必须同仓库、同版本发」的物理原因。 -->
+    <ProjectReference Include="..\VelaShell.Plugin.Cli\VelaShell.Plugin.Cli.csproj"
+                      PrivateAssets="all" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="build\**" Pack="true" PackagePath="build\" />
+  </ItemGroup>
+
+  <!--
+    Avalonia 版本锁的一致性核对。这个版本号在拆库之后有**三个**落点,任意两处漂了,
+    插件工程编译期拿到的 Avalonia 就与宿主运行时强制共享的那份不是一个版本,
+    表现为跨 ALC 的控件类型对不上,而且要等到用户装上插件才炸。三处是:
+
+      ① $(VelaSdkPinnedAvaloniaVersion) —— **权威**。来自 velashell-plugin-sdk 的
+         VelaShell.PluginSdk 包(buildTransitive/VelaShell.PluginSdk.props)。
+         宿主也核对同一个值(见宿主 src/Directory.Build.targets 的 VerifyAvaloniaMatchesSdk),
+         所以「与宿主一致」这件事通过它传递,不需要本仓库读宿主的任何文件。
+      ② $(VelaAvaloniaVersion) —— 本仓库根 Directory.Build.props 里的副本,
+         本包用精确区间 [x.y.z] 锁给所有插件工程的就是它。
+         为什么要抄一份而不直接用 ①:① 来自还原后生成的 obj/*.nuget.g.props,
+         而 PackageReference 的版本区间是**还原本身**要读的输入 —— 冷还原时 ① 还是空的。
+      ③ build/VelaShell.PluginSdk.Build.props 里给插件工程的同名默认值 ——
+         插件工程侧那道 VELA1001 核对拿它做基准。
+
+    下面把三者比一遍。① 缺失单独报,因为那意味着引用的 SDK 包太老(1.5.0 之前不导出),
+    此时静默放行等于把整条跨仓库核对链悄悄关掉。
+  -->
+  <Target Name="VerifyAvaloniaVersionPin" BeforeTargets="Build">
+    <XmlPeek XmlInputPath="$(MSBuildThisFileDirectory)build\VelaShell.PluginSdk.Build.props"
+             Query="/Project/PropertyGroup/VelaAvaloniaVersion/text()">
+      <Output TaskParameter="Result" ItemName="_VelaShippedAvaloniaVersion" />
+    </XmlPeek>
+
+    <Error Condition="'@(_VelaShippedAvaloniaVersion)' != '$(VelaAvaloniaVersion)'"
+           Code="VELA1000"
+           Text="Avalonia version pin drifted inside this repository: VelaAvaloniaVersion in Directory.Build.props is '$(VelaAvaloniaVersion)' but build/VelaShell.PluginSdk.Build.props ships '@(_VelaShippedAvaloniaVersion)'. Plugin projects would compile against a different Avalonia than this package pins. Update both to the same version." />
+
+    <Error Condition="'$(VelaSdkPinnedAvaloniaVersion)' == ''"
+           Code="VELA1005"
+           Text="The referenced VelaShell.PluginSdk package ($(VelaSdkDependencyVersion)) does not export VelaSdkPinnedAvaloniaVersion. That property is the only channel through which the contract SDK tells this package which Avalonia the host loads; without it the cross-repository pin check is silently disabled. Reference VelaShell.PluginSdk 1.5.0 or newer (set VelaSdkDependencyVersion in Directory.Build.props)." />
+
+    <Error Condition="'$(VelaSdkPinnedAvaloniaVersion)' != '' and '$(VelaSdkPinnedAvaloniaVersion)' != '$(VelaAvaloniaVersion)'"
+           Code="VELA1006"
+           Text="Avalonia version pin drifted across repositories: VelaShell.PluginSdk $(VelaSdkDependencyVersion) pins Avalonia '$(VelaSdkPinnedAvaloniaVersion)' (that is the authoritative value, and the value the VelaShell host is verified against), but this repository pins '$(VelaAvaloniaVersion)'. Plugins built with this package would compile against an Avalonia the host does not load. Update VelaAvaloniaVersion in Directory.Build.props and build/VelaShell.PluginSdk.Build.props to '$(VelaSdkPinnedAvaloniaVersion)', or point VelaSdkDependencyVersion at the SDK release that matches." />
+  </Target>
+
+  <!-- 把 vela-plugin 的构建产物收进包的 tools/net11.0/(dotnet exec 需要 dll + runtimeconfig + deps)。
+       注:拆库之后 VelaShell.PluginSdk.dll 是通过 PackageReference 复制进 CLI 输出目录的,
+       同样被下面的 *.dll 通配收进来 —— 这是需要的,打包器在插件作者机器上要靠它跑。 -->
+  <Target Name="AddVelaCliToPackage">
+    <PropertyGroup>
+      <_VelaCliOutputDir>$(MSBuildThisFileDirectory)..\VelaShell.Plugin.Cli\bin\$(Configuration)\$(TargetFramework)\</_VelaCliOutputDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <_VelaCliFile Include="$(_VelaCliOutputDir)*.dll;$(_VelaCliOutputDir)*.json" />
+      <TfmSpecificPackageFile Include="@(_VelaCliFile)" PackagePath="tools/$(TargetFramework)/%(Filename)%(Extension)" />
+    </ItemGroup>
+    <Error Condition="'@(_VelaCliFile)' == ''"
+           Code="VELA1002"
+           Text="vela-plugin build output not found at $(_VelaCliOutputDir); build src/VelaShell.Plugin.Cli first." />
+  </Target>
+
+</Project>

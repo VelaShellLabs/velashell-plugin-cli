@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- AVLN3001:面板视图刻意只有带上下文的构造(由 ShowPanelAsync 的工厂创建),
+         不走运行时 XAML 装载器的无参构造路径。与模板保持一致。 -->
+    <NoWarn>$(NoWarn);AVLN3001</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 这一行就是被验的东西:插件工程只引这一个包,契约程序集、与宿主版本一致的
+         Avalonia(含 AXAML 编译器)、plugin.json 处理、清单校验与 PackVpx 都得随它到位。
+         版本由 scripts/Invoke-Smoke.ps1 在复制夹具时替换成刚打出来的那一版。 -->
+    <PackageReference Include="VelaShell.PluginSdk.Build" Version="VELA_BUILD_VERSION" />
+  </ItemGroup>
+
+</Project>

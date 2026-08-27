@@ -1,0 +1,171 @@
+# 插件工具链(CLI + 构建支持包)的发布流水线:在 GitHub 页面**发布 Release** 时自动触发。
+#
+# 一次发布产出两个 NuGet 包,共用 Release 标签里的那个版本号:
+#
+#      VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
+#      VelaShell.PluginSdk.Build     插件工程引用的那一个包(targets + 打包器 + 依赖锁)
+#
+# 这两个**必须同版本发**:.Build 把 vela-plugin 的构建产物收进包的 tools/,它的 targets
+# 直接调那个打包器的命令面(`validate` / `pack`)。命令行参数改了而 targets 没跟上,
+# 现象是插件作者构建到一半 Exec 失败 —— 所以它俩是一个发布单元,拆库时刻意留在同仓库。
+#
+# **另外三个包不在这里发**(2026-08-27 拆库起):
+#      VelaShell.PluginSdk / .Testing …… joesdu/velashell-plugin-sdk
+#      VelaShell.Plugin.Templates ……… joesdu/velashell-plugin-templates
+# 三个仓库各有各的版本号。本仓库发 1.5.3 不代表契约动了,也不要求模板跟着发。
+#
+# 📌 版本号:**发版前在本地落好、随功能改动一起合进 main**。
+#    跑一次 `pwsh scripts/Set-Version.ps1 <版本>`,它会把该版本写进 Directory.Build.props
+#    与两份 cli.md 的版本横幅 —— 三处。所以发版两步:
+#      ① 本地跑 Set-Version.ps1,连同功能改动一起合进 main
+#      ② 在 GitHub 上发 Release,标签填 v<版本>
+#
+#    下面的 Stamp 步骤只改 runner 上的工作区,**不回写仓库**:产物版本号因此永远等于
+#    Release 标签,与仓库里当时提交了什么无关。忘了第 ① 步的兜底是 CI 的版本同步体检。
+#
+# ⚠️ 想让插件作者吃到**新契约**,得另外手工抬 Directory.Build.props 里的
+#    VelaSdkDependencyVersion(Set-Version.ps1 刻意不碰它)—— 那是一次独立的决定,
+#    不该被"发个补丁版"顺手带上。抬完 VerifyAvaloniaVersionPin 会在构建期核对
+#    Avalonia 版本锁是否也要跟着动(VELA1006)。
+#
+# ⚠️ 发完新版 .Build 之后,若希望 `dotnet new velaplugin` 生成的工程指向它,
+#    要去 velashell-plugin-templates 抬 VelaBuildPackageVersion 再发一版模板。
+#    不做也不会坏 —— 新建的工程只是继续引用上一版 .Build 包,那是完全可用的。
+#
+# 推送用 **NuGet Trusted Publishing(OIDC)**,不存 API Key:
+#   NuGet/login 拿本次运行的 GitHub OIDC 令牌去 nuget.org 换一把**短时效**的推送密钥,
+#   用完即弃。
+#   ⚠️ 首次发版前必须在 nuget.org 上为**本仓库**建一条可信发布策略:
+#        Repository owner  joesdu
+#        Repository        velashell-plugin-cli
+#        Workflow file     release.yml
+#      建法见 docs/release-process.md 的「NuGet 可信发布」一节。
+#
+# 本流水线**不需要任何仓库机密**:程序集不做强名称签名(那只开在 velashell-plugin-sdk
+# 那一支 —— 因为宿主要引用它),推送走 OIDC。
+name: Release
+
+on:
+  release:
+    types: [published]
+  # 手动兜底:release 事件没能触发时,在 Actions 页面选本工作流 → Run workflow → 填标签即可补跑。
+  # 推送用 --skip-duplicate,对同一标签重复跑是幂等的。
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的 Release 标签(如 v1.5.1)'
+        required: true
+        type: string
+      dryRun:
+        description: '只打包与冒烟,不推送 nuget.org'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  # 只读即可:本流水线不上传 Release 资产、也不回写版本号。
+  contents: read
+  # Trusted Publishing 的前提:没有它,NuGet/login 拿不到 OIDC 令牌,换密钥这一步会直接失败。
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = '${{ github.event.release.tag_name || inputs.tag }}'
+          if ([string]::IsNullOrWhiteSpace($tag)) { Write-Error "No release tag available."; exit 1 }
+          $version = $tag.TrimStart('v')
+          # 版本号必须是合法 SemVer:打错标签(比如 "release-2")的话,包会以一个谁也想不到的
+          # 版本号推上 nuget.org,而 nuget.org 的包版本**不可删除、不可覆盖**。
+          if ($version -notmatch '^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$') {
+            Write-Error "Release tag '$tag' does not resolve to a SemVer version (got '$version'). Use e.g. v1.5.1 or v1.6.0-preview.1."
+            exit 1
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          Write-Host "Publishing version $version (tag $tag)"
+
+      # 放在**构建之前的第一步**,产物因此永远与 Release 标签一致。
+      # 正常路径上这一步是空操作(版本号已经在 main 里了)。
+      # ⚠️ 只改工作区,**不回写仓库**:main 若真的落后了,下面 `git diff --stat` 会把它打出来,
+      #    同时 main 上的 CI 版本同步体检也会红 —— 照它给的命令本地补一个 PR。
+      - name: Stamp version into the repo
+        shell: pwsh
+        run: |
+          & ./scripts/Set-Version.ps1 '${{ steps.version.outputs.version }}'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+          git --no-pager diff --stat
+
+      # 跨仓库的 Avalonia 版本锁核对(VELA1005 / VELA1006)就在这一步的构建里发生。
+      - name: Test
+        shell: pwsh
+        run: |
+          dotnet test VelaShell.Plugin.Cli.slnx -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Pack
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          New-Item -ItemType Directory -Force artifacts/nuget | Out-Null
+          # 顺序不能反:VelaShell.PluginSdk.Build 的 AddVelaCliToPackage 要去
+          # src/VelaShell.Plugin.Cli/bin/Release/ 收打包器的产物。
+          $projects = @(
+            'src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj',
+            'src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj'
+          )
+          foreach ($project in $projects) {
+            dotnet pack $project -c Release -o artifacts/nuget -p:VelaToolsVersion=$version --nologo
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+          Get-ChildItem artifacts/nuget | Select-Object -ExpandProperty Name
+
+      # 端到端冒烟:完全站在插件作者的位置上 —— 从刚打出的包还原、构建、出 .vpx,
+      # 最后确认包能被容器读回来、共享程序集没漏进插件输出目录。任何一步失败都不该发出去。
+      - name: Smoke test (plugin project -> build -> .vpx)
+        shell: pwsh
+        run: |
+          & ./scripts/Invoke-Smoke.ps1 -Feed ./artifacts/nuget -Version '${{ steps.version.outputs.version }}'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: artifacts/nuget/*
+          if-no-files-found: error
+
+      # Trusted Publishing:用本次运行的 OIDC 身份换一把短时效推送密钥。
+      # 换不到密钥基本只有一个原因 —— nuget.org 上那条策略的 Repository / Workflow 字段
+      # 与本仓库对不上。详见 docs/release-process.md。
+      - name: NuGet login (trusted publishing)
+        id: nuget-login
+        if: ${{ !inputs.dryRun }}
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER || 'joes_du' }}
+
+      - name: Push to nuget.org
+        if: ${{ !inputs.dryRun }}
+        shell: pwsh
+        run: |
+          # --skip-duplicate:同一版本重跑不算失败(手动补跑是常规操作)。
+          #
+          # ⚠️ 通配符必须自己展开:dotnet nuget push **不做 glob 扩展**,把
+          #    "artifacts/nuget/*.nupkg" 整个当成文件名去找,报 "File does not exist"。
+          $packages = @(Get-ChildItem artifacts/nuget/*.nupkg)
+          if ($packages.Count -eq 0) { throw "No .nupkg found in artifacts/nuget." }
+          foreach ($package in $packages) {
+            dotnet nuget push $package.FullName --source https://api.nuget.org/v3/index.json --api-key $env:NUGET_TOKEN --skip-duplicate
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+        env:
+          NUGET_TOKEN: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}

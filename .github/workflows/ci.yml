@@ -1,0 +1,94 @@
+# vela-plugin 与 VelaShell.PluginSdk.Build 的日常验证。
+# 发布不走这里(见 release.yml),但**发布会做的事这里全都做一遍** ——
+# 唯一差别是不推 nuget.org。
+#
+# 注意本仓库**不需要任何机密**:程序集不做强名称签名(那只开在 velashell-plugin-sdk
+# 那一支),推送用 OIDC。于是 fork PR 与主分支跑的是完全同一条路径,没有"拿不到密钥
+# 就降级"的分支要维护。
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      # 复用仓库当前的默认版本:这条路径不推送,不需要编一个 CI 专属版本号。
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $props = Get-Content -Raw Directory.Build.props
+          $version = [regex]::Match($props, '<VelaToolsVersion[^>]*>([^<]+)</VelaToolsVersion>').Groups[1].Value
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            Write-Error "Could not read VelaToolsVersion from Directory.Build.props"
+            exit 1
+          }
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Validating version $version"
+
+      # 版本号同步体检 —— release.yml 的 Stamp 步骤只改 runner 上的工作区、不回写仓库,
+      # 所以"忘了在本地跑 Set-Version.ps1"这件事只能靠这里显形。
+      - name: Version consistency check
+        shell: pwsh
+        run: |
+          & ./scripts/Set-Version.ps1 '${{ steps.version.outputs.version }}' -Check
+          # if ($LASTEXITCODE) 而不是 -ne 0:.ps1 不调用 exit 时**不会设置** $LASTEXITCODE,
+          # 那时它是 $null —— 而 `$null -ne 0` 为真,会把一次成功判成失败。
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      # 跨仓库的 Avalonia 版本锁核对(VELA1005 / VELA1006)就在这一步的构建里发生:
+      # VelaShell.PluginSdk 包把权威版本导出成 $(VelaSdkPinnedAvaloniaVersion),
+      # VelaShell.PluginSdk.Build 的 VerifyAvaloniaVersionPin 拿它跟本仓库的副本比。
+      - name: Test
+        shell: pwsh
+        run: |
+          dotnet test VelaShell.Plugin.Cli.slnx -c Debug --nologo
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Pack
+        shell: pwsh
+        run: |
+          $version = '${{ steps.version.outputs.version }}'
+          New-Item -ItemType Directory -Force artifacts/nuget | Out-Null
+          # 顺序不能反:VelaShell.PluginSdk.Build 的 AddVelaCliToPackage 要去
+          # src/VelaShell.Plugin.Cli/bin/Release/ 收打包器的产物。
+          $projects = @(
+            'src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj',
+            'src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj'
+          )
+          foreach ($project in $projects) {
+            dotnet pack $project -c Release -o artifacts/nuget -p:VelaToolsVersion=$version --nologo
+            if ($LASTEXITCODE -ne 0) { exit 1 }
+          }
+          Get-ChildItem artifacts/nuget | Select-Object -ExpandProperty Name
+
+      # 端到端冒烟:拿刚打出的包,站在插件作者的位置上走一遍
+      # (最小插件工程 → 还原 → 构建 → 出 .vpx → 读回容器 → 查共享程序集有没有漏)。
+      # 夹具在 tests/smoke/,细节见 scripts/Invoke-Smoke.ps1 的注释。
+      # 这一步不是形式:插件工程是**仓库外环境**,仓库内的 Directory.Build.props 一条也
+      # 吃不到,而历史上两个最难查的坑(CA2252 全线报错、AXAML 编译器到不了插件工程)
+      # 都只有在这个前提下才会显形。
+      - name: Smoke test (plugin project -> build -> .vpx)
+        shell: pwsh
+        run: |
+          & ./scripts/Invoke-Smoke.ps1 -Feed ./artifacts/nuget -Version '${{ steps.version.outputs.version }}'
+          if ($LASTEXITCODE) { exit $LASTEXITCODE }
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: artifacts/nuget/*
+          if-no-files-found: error

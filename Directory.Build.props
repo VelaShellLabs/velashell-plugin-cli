@@ -1,0 +1,123 @@
+<Project>
+  <PropertyGroup>
+	<TargetFramework>net11.0</TargetFramework>
+  </PropertyGroup>
+
+  <!-- 定义 Linux -->
+  <PropertyGroup>
+  	<IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsLinux)' == 'true'">
+  	<DefineConstants>$(DefineConstants);LINUX</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      本仓库产出两个包,共用这个版本号:
+          VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
+          VelaShell.PluginSdk.Build     插件工程引用的那一个包(targets + 打包器 + 依赖锁)
+
+      这两个**必须同版本发**:.Build 把 vela-plugin 的构建产物收进包的 tools/,
+      它的 targets 直接调那个打包器的命令面(`validate` / `pack`)。命令行参数改了而
+      targets 没跟上,现象是插件作者构建到一半 Exec 失败 —— 所以它俩是一个发布单元。
+
+      **与契约 SDK 解耦**(2026-08-27 拆库起):VelaShell.PluginSdk 在
+      joesdu/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
+      本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,把下面的
+      VelaSdkDependencyVersion 抬上来再发一版即可。
+
+      CI 发包时用 -p:VelaToolsVersion= 覆盖(取自 Release 标签)。
+    -->
+    <VelaToolsVersion Condition="'$(VelaToolsVersion)' == ''">1.5.0</VelaToolsVersion>
+    <!-- 去掉预发布后缀的数字版(AssemblyVersion/FileVersion 不接受后缀)与主版本号。 -->
+    <VelaToolsVersionCore>$([System.Text.RegularExpressions.Regex]::Replace($(VelaToolsVersion), '-.*$', ''))</VelaToolsVersionCore>
+    <VelaToolsMajor>$([System.Text.RegularExpressions.Regex]::Replace($(VelaToolsVersionCore), '\..*$', ''))</VelaToolsMajor>
+    <Version>$(VelaToolsVersion)</Version>
+    <AssemblyVersion>$(VelaToolsMajor).0.0.0</AssemblyVersion>
+    <FileVersion>$(VelaToolsVersionCore)</FileVersion>
+    <!-- 不把 git 提交哈希拼进 InformationalVersion(默认会加 +sha 后缀)。
+         `vela-plugin -v` 打的就是 InformationalVersion,带上 +sha 会很难看。 -->
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      本仓库引用的**契约 SDK 包版本**。这是拆库之后唯一的跨仓库依赖旋钮:
+
+        · vela-plugin 用 SDK 里的 VpxContainer / PluginManifestReader —— 宿主装包与工具
+          出包必须走同一份实现,否则"本机打得出、宿主装不上"这种事迟早发生;
+        · VelaShell.PluginSdk.Build 把它以 PrivateAssets="none" 传给插件工程,
+          于是插件作者引一个 .Build 就拿到了契约程序集。
+
+      **抬这个版本 = 让插件作者的编译目标契约变新**。抬完记得:
+        ① 核对 VelaAvaloniaVersion 与新 SDK 导出的 $(VelaSdkPinnedAvaloniaVersion) 一致
+           (下面 VerifyAvaloniaVersionPin 会在构建期比一遍,不用担心漏);
+        ② 发一版本仓库的包,插件作者才吃得到。
+      不抬也完全正常 —— 老契约照样能打包、能校验。
+    -->
+    <VelaSdkDependencyVersion Condition="'$(VelaSdkDependencyVersion)' == ''">1.5.0</VelaSdkDependencyVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!--
+      插件与宿主必须用同一版本的 Avalonia:装载器强制让 Avalonia* 回落到宿主那一套
+      (见宿主的 PluginAssemblyLoadContext),版本不一致时表现为跨 ALC 的控件类型对不上。
+
+      **这个版本号的权威在 velashell-plugin-sdk**,不在这里 —— 这里写的是一份必须与之
+      相等的副本。VelaShell.PluginSdk 包会把权威值导出成 $(VelaSdkPinnedAvaloniaVersion)
+      (buildTransitive),VelaShell.PluginSdk.Build 的 VerifyAvaloniaVersionPin 在构建期
+      把「这里」「包里给插件工程的默认值」「SDK 导出的权威值」三者比一遍,漂了就红。
+
+      为什么不直接用 $(VelaSdkPinnedAvaloniaVersion) 而要抄一份:那个属性来自 NuGet
+      还原之后生成的 obj/*.nuget.g.props,而 Avalonia 的 PackageReference 版本区间
+      是**还原本身**要读的输入 —— 冷还原时它还是空的,区间会变成 "[]" 直接失败。
+      所以只能写字面量 + 构建期核对。
+    -->
+    <VelaAvaloniaVersion>12.1.1</VelaAvaloniaVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+  	<Authors>joesdu</Authors>
+  	<PackagePrefix>VelaShell</PackagePrefix>
+  	<RepositoryType>git</RepositoryType>
+  	<RepositoryUrl>https://github.com/joesdu/velashell-plugin-cli</RepositoryUrl>
+  	<PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
+  	<PackageProjectUrl>https://github.com/joesdu/velashell-plugin-cli</PackageProjectUrl>
+  	<GenerateAssemblyConfigurationAttribute>True</GenerateAssemblyConfigurationAttribute>
+  	<GenerateAssemblyCompanyAttribute>True</GenerateAssemblyCompanyAttribute>
+  	<GenerateAssemblyProductAttribute>True</GenerateAssemblyProductAttribute>
+  	<GenerateDocumentationFile>True</GenerateDocumentationFile>
+  	<PackageReadmeFile>README.md</PackageReadmeFile>
+  	<PublishRepositoryUrl>true</PublishRepositoryUrl>
+  	<EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net11.0'">
+  	<EnablePreviewFeatures>true</EnablePreviewFeatures>
+  	<Features>$(Features);runtime-async=on</Features>
+  	<NoWarn>$(NoWarn);CA2252;SYSLIB5007;</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+  	<None Include=".\README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+  <PropertyGroup>
+  	<LangVersion>preview</LangVersion>
+  	<Nullable>enable</Nullable>
+  	<ImplicitUsings>enable</ImplicitUsings>
+  	<NoWarn>$(NoWarn);IDE0047;</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <VelaRepoRoot>$(MSBuildThisFileDirectory)</VelaRepoRoot>
+    <VelaArtifactsDir Condition="'$(VelaArtifactsDir)' == ''">$(VelaRepoRoot)artifacts</VelaArtifactsDir>
+  </PropertyGroup>
+
+  <!--
+    ⚠️ 本仓库的程序集**不做强名称签名**,因此不需要 STRONG_NAME_KEY 机密。
+    方向是对的:未签名程序集可以引用已签名的(vela-plugin → VelaShell.PluginSdk),
+    反过来才不行。契约 SDK 之所以必须签,是因为**宿主**(已签名)要引用它。
+  -->
+</Project>
