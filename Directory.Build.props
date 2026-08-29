@@ -23,7 +23,7 @@
       targets 没跟上,现象是插件作者构建到一半 Exec 失败 —— 所以它俩是一个发布单元。
 
       **与契约 SDK 解耦**(2026-08-27 拆库起):VelaShell.PluginSdk 在
-      joesdu/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
+      VelaShellLabs/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
       本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,把下面的
       VelaSdkDependencyVersion 抬上来再发一版即可。
 
@@ -39,24 +39,6 @@
     <!-- 不把 git 提交哈希拼进 InformationalVersion(默认会加 +sha 后缀)。
          `vela-plugin -v` 打的就是 InformationalVersion,带上 +sha 会很难看。 -->
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <!--
-      本仓库引用的**契约 SDK 包版本**。这是拆库之后唯一的跨仓库依赖旋钮:
-
-        · vela-plugin 用 SDK 里的 VpxContainer / PluginManifestReader —— 宿主装包与工具
-          出包必须走同一份实现,否则"本机打得出、宿主装不上"这种事迟早发生;
-        · VelaShell.PluginSdk.Build 把它以 PrivateAssets="none" 传给插件工程,
-          于是插件作者引一个 .Build 就拿到了契约程序集。
-
-      **抬这个版本 = 让插件作者的编译目标契约变新**。抬完记得:
-        ① 核对 VelaAvaloniaVersion 与新 SDK 导出的 $(VelaSdkPinnedAvaloniaVersion) 一致
-           (下面 VerifyAvaloniaVersionPin 会在构建期比一遍,不用担心漏);
-        ② 发一版本仓库的包,插件作者才吃得到。
-      不抬也完全正常 —— 老契约照样能打包、能校验。
-    -->
-    <VelaSdkDependencyVersion Condition="'$(VelaSdkDependencyVersion)' == ''">1.5.0</VelaSdkDependencyVersion>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -81,9 +63,9 @@
   	<Authors>joesdu</Authors>
   	<PackagePrefix>VelaShell</PackagePrefix>
   	<RepositoryType>git</RepositoryType>
-  	<RepositoryUrl>https://github.com/joesdu/velashell-plugin-cli</RepositoryUrl>
+  	<RepositoryUrl>https://github.com/VelaShellLabs/velashell-plugin-cli</RepositoryUrl>
   	<PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
-  	<PackageProjectUrl>https://github.com/joesdu/velashell-plugin-cli</PackageProjectUrl>
+  	<PackageProjectUrl>https://github.com/VelaShellLabs/velashell-plugin-cli</PackageProjectUrl>
   	<GenerateAssemblyConfigurationAttribute>True</GenerateAssemblyConfigurationAttribute>
   	<GenerateAssemblyCompanyAttribute>True</GenerateAssemblyCompanyAttribute>
   	<GenerateAssemblyProductAttribute>True</GenerateAssemblyProductAttribute>

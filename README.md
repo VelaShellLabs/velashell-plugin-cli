@@ -23,7 +23,7 @@ vela-plugin update                          # 以后升级
 兼容性;`--source` 可以指到自建商店。完整命令见 [`docs/cli.md`](docs/cli.md)。
 
 写自己的插件:见
-[开发指南](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/dev-guide.md)。
+[开发指南](https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/dev-guide.md)。
 
 ## 为什么这两个包在同一个仓库
 
@@ -40,9 +40,9 @@ sdk 仓库要去引用 CLI 包,于是 SDK 发版被 CLI 卡住 —— 正是拆�
 
 | 仓库 | 产出 | 什么时候发 |
 | --- | --- | --- |
-| [`velashell-plugin-sdk`](https://github.com/joesdu/velashell-plugin-sdk) | `VelaShell.PluginSdk`、`.Testing` | 契约有增删改时 |
+| [`velashell-plugin-sdk`](https://github.com/VelaShellLabs/velashell-plugin-sdk) | `VelaShell.PluginSdk`、`.Testing` | 契约有增删改时 |
 | **本仓库** `velashell-plugin-cli` | `VelaShell.Plugin.Cli`、`VelaShell.PluginSdk.Build` | 工具/打包/MSBuild 逻辑变化时 |
-| [`velashell-plugin-templates`](https://github.com/joesdu/velashell-plugin-templates) | `VelaShell.Plugin.Templates` | 模板内容变化,或要把新建工程指到新版 Build 包时 |
+| [`velashell-plugin-templates`](https://github.com/VelaShellLabs/velashell-plugin-templates) | `VelaShell.Plugin.Templates` | 模板内容变化,或要把新建工程指到新版 Build 包时 |
 
 依赖方向是单向的,没有环:
 
@@ -55,7 +55,7 @@ velashell-plugin-templates
 ```
 
 另外两个相关仓库:[joesdu/VelaShell](https://github.com/joesdu/VelaShell)(宿主主程序)、
-[joesdu/velashell-plugins](https://github.com/joesdu/velashell-plugins)(第一方插件)。
+[joesdu/velashell-plugins](https://github.com/VelaShellLabs/velashell-plugins)(第一方插件)。
 
 ## 两个跨仓库旋钮
 

@@ -1,7 +1,7 @@
 # 发版流程(CLI + 构建支持包)
 
 > 本篇只讲**本仓库**怎么发版。契约 SDK 见
-> [velashell-plugin-sdk](https://github.com/joesdu/velashell-plugin-sdk/blob/main/docs/release-process.md),
+> [velashell-plugin-sdk](https://github.com/VelaShellLabs/velashell-plugin-sdk/blob/main/docs/release-process.md),
 > `dotnet new` 模板见
 > [velashell-plugin-templates](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/release-process.md)。
 
@@ -63,7 +63,7 @@ Actions 页面 → 选 Release 工作流 → Run workflow → 填标签。推送
 | --- | --- |
 | Policy name | `velashell-plugin-cli`(随意,能认出来就行) |
 | Policy owner | `joes_du` |
-| Repository Owner | `joesdu` |
+| Repository Owner | `VelaShellLabs` |
 | **Repository** | `velashell-plugin-cli` |
 | **Workflow File** | `release.yml` —— **只填文件名**,不要写 `.github/workflows/` 前缀 |
 | Environment | 留空(工作流没用 GitHub Environments) |

@@ -1,7 +1,7 @@
 # `vela-plugin` 命令行手册
 
 > 适用版本:vela-plugin **1.5.0**(`vela-plugin --version` 看本机装的是哪版)。
-> 相关文档(在别的仓库):[开发指南](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/dev-guide.md) · [打包与发布](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/publishing.md) · [SDK 参考](https://github.com/joesdu/velashell-plugin-sdk/blob/main/docs/sdk-reference.md)
+> 相关文档(在别的仓库):[开发指南](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/dev-guide.md) · [打包与发布](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/publishing.md) · [SDK 参考](https://github.com/VelaShellLabs/velashell-plugin-sdk/blob/main/docs/sdk-reference.md)
 
 `vela-plugin` 是插件作者的命令行工具。它与宿主共用同一份实现(`VelaShell.PluginSdk`
 里的清单解析、`.vpx` 容器读写、签名校验),所以**不存在"工具认、宿主不认"的缝**。
