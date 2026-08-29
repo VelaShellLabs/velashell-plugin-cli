@@ -28,7 +28,12 @@
          插件工程里的 .axaml 根本不会被编译,现象是运行时找不到控件而不是构建报错。 -->
     <PackageReference Include="Avalonia" Version="[$(VelaAvaloniaVersion)]" ExcludeAssets="runtime" PrivateAssets="none" />
     <!-- 拆库(2026-08-27)之后契约 SDK 也走 NuGet(原先是 ProjectReference)。
-         版本旋钮 VelaSdkDependencyVersion 在仓库根 Directory.Build.props。
+         版本就写在下面这一行的字面量上,由 NuGet(或合掉 Dependabot 的 PR)直接更新
+         —— **不要**把它抽成 MSBuild 属性:Version="$(...)" 会让 Dependabot 与
+         `dotnet add package` 认不出这条依赖,而这个包正是要靠它们来更新的。
+         ⚠️ src/VelaShell.Plugin.Cli 里还有一条同包引用,两处必须同版本:.Build 传给
+         插件工程的那份契约,与打包器在插件作者机器上加载的那份,漂了就是同名类型
+         来自两份不同程序集。Dependabot 会把两处一起抬,手工改时别落下另一处。
          这一条同时是下面 VerifyAvaloniaVersionPin 的**信息来源**:SDK 包的
          buildTransitive props 会把权威 Avalonia 版本导出成 $(VelaSdkPinnedAvaloniaVersion)。 -->
     <PackageReference Include="VelaShell.PluginSdk" Version="1.5.1" ExcludeAssets="runtime" PrivateAssets="none" />
@@ -73,11 +78,11 @@
 
     <Error Condition="'$(VelaSdkPinnedAvaloniaVersion)' == ''"
            Code="VELA1005"
-           Text="The referenced VelaShell.PluginSdk package ($(VelaSdkDependencyVersion)) does not export VelaSdkPinnedAvaloniaVersion. That property is the only channel through which the contract SDK tells this package which Avalonia the host loads; without it the cross-repository pin check is silently disabled. Reference VelaShell.PluginSdk 1.5.0 or newer (set VelaSdkDependencyVersion in Directory.Build.props)." />
+           Text="The referenced VelaShell.PluginSdk package does not export VelaSdkPinnedAvaloniaVersion. That property is the only channel through which the contract SDK tells this package which Avalonia the host loads; without it the cross-repository pin check is silently disabled. Bump the VelaShell.PluginSdk PackageReference in this project (and the matching one in src/VelaShell.Plugin.Cli) to 1.5.0 or newer." />
 
     <Error Condition="'$(VelaSdkPinnedAvaloniaVersion)' != '' and '$(VelaSdkPinnedAvaloniaVersion)' != '$(VelaAvaloniaVersion)'"
            Code="VELA1006"
-           Text="Avalonia version pin drifted across repositories: VelaShell.PluginSdk $(VelaSdkDependencyVersion) pins Avalonia '$(VelaSdkPinnedAvaloniaVersion)' (that is the authoritative value, and the value the VelaShell host is verified against), but this repository pins '$(VelaAvaloniaVersion)'. Plugins built with this package would compile against an Avalonia the host does not load. Update VelaAvaloniaVersion in Directory.Build.props and build/VelaShell.PluginSdk.Build.props to '$(VelaSdkPinnedAvaloniaVersion)', or point VelaSdkDependencyVersion at the SDK release that matches." />
+           Text="Avalonia version pin drifted across repositories: VelaShell.PluginSdk $(VelaSdkPackageVersion) pins Avalonia '$(VelaSdkPinnedAvaloniaVersion)' (that is the authoritative value, and the value the VelaShell host is verified against), but this repository pins '$(VelaAvaloniaVersion)'. Plugins built with this package would compile against an Avalonia the host does not load. Update VelaAvaloniaVersion in Directory.Build.props and build/VelaShell.PluginSdk.Build.props to '$(VelaSdkPinnedAvaloniaVersion)', or move the VelaShell.PluginSdk PackageReference to the SDK release that matches." />
   </Target>
 
   <!-- 把 vela-plugin 的构建产物收进包的 tools/net11.0/(dotnet exec 需要 dll + runtimeconfig + deps)。

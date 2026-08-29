@@ -48,23 +48,26 @@ sdk 仓库要去引用 CLI 包,于是 SDK 发版被 CLI 卡住 —— 正是拆�
 
 ```
 velashell-plugin-sdk                  契约,无上游
-        ↓ NuGet: VelaShell.PluginSdk        ← 版本旋钮 VelaSdkDependencyVersion
+        ↓ NuGet: VelaShell.PluginSdk        ← 版本写在两个 csproj 的 PackageReference 上
 velashell-plugin-cli                  ← 本仓库
         ↓ NuGet: VelaShell.PluginSdk.Build  ← 模板里那个 sdkVersion 默认值
 velashell-plugin-templates
 ```
 
 另外两个相关仓库:[joesdu/VelaShell](https://github.com/joesdu/VelaShell)(宿主主程序)、
-[joesdu/velashell-plugins](https://github.com/VelaShellLabs/velashell-plugins)(第一方插件)。
+[VelaShellLabs/velashell-plugins](https://github.com/VelaShellLabs/velashell-plugins)(第一方插件)。
 
 ## 两个跨仓库旋钮
 
-都在 `Directory.Build.props`,**都不由 `Set-Version.ps1` 管**——它们是需要想清楚的独立决定:
+**都不由 `Set-Version.ps1` 管**——它们是需要想清楚的独立决定:
 
-| 旋钮 | 含义 | 抬它意味着 |
+| 旋钮 | 在哪 | 抬它意味着 |
 | --- | --- | --- |
-| `VelaSdkDependencyVersion` | 引用哪一版契约 SDK | 插件作者的**编译目标契约**变新。发一个只改了输出格式的补丁版时不该顺手带上 |
-| `VelaAvaloniaVersion` | 锁给插件工程的 Avalonia 版本 | 权威在 sdk 仓库,这里只是副本。改它必须跟着 SDK 走 |
+| `VelaShell.PluginSdk` 的 `PackageReference`(引用哪一版契约 SDK) | `src/VelaShell.Plugin.Cli` 与 `src/VelaShell.PluginSdk.Build` 两个 csproj,**必须同版本** | 插件作者的**编译目标契约**变新。发一个只改了输出格式的补丁版时不该顺手带上 |
+| `VelaAvaloniaVersion`(锁给插件工程的 Avalonia 版本) | `Directory.Build.props` | 权威在 sdk 仓库,这里只是副本。改它必须跟着 SDK 走 |
+
+契约 SDK 的版本刻意写成**字面量**、不抽成 MSBuild 属性:`Version="$(...)"` 会让
+Dependabot 与 `dotnet add package` 认不出这条依赖,而这个包正是要靠它们来更新的。
 
 第二个有构建期硬核对:`VelaShell.PluginSdk` 包把权威值导出成
 `$(VelaSdkPinnedAvaloniaVersion)`,`VerifyAvaloniaVersionPin` 拿它跟本仓库的副本、
@@ -87,7 +90,7 @@ pwsh scripts/Invoke-Smoke.ps1 -Feed ./artifacts/nuget -Version 1.5.0
 **插件工程是仓库外环境,仓库内的构建约定一条也吃不到**,而这个冒烟的全部价值就在这里。
 
 想验一版还没发布的契约 SDK:在 sdk 仓库 `dotnet pack -o <这里>/local-packages`,
-再把 `VelaSdkDependencyVersion` 临时指过去(见 `nuget.config` 的注释)。
+再把两个 csproj 里 `VelaShell.PluginSdk` 的版本临时指过去(见 `nuget.config` 的注释)。
 
 本仓库**不做强名称签名**,因此不需要 `STRONG_NAME_KEY` —— 未签名程序集可以引用
 已签名的,方向是对的。

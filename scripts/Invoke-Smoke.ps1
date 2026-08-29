@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     拆库(2026-08-27)之前这一步是"装模板 → dotnet new → 构建 → 出 .vpx"。模板搬去
-    joesdu/velashell-plugin-templates 之后,本仓库不能再依赖那个包来验自己的包
+    VelaShellLabs/velashell-plugin-templates 之后,本仓库不能再依赖那个包来验自己的包
     —— 否则模板仓库出问题会让本仓库的 CI 无端变红,而且发本仓库的包时还得先有模板包。
 
     所以夹具改成自带:tests/smoke/ 下是一个**手写的最小插件工程**,与 velaplugin-ui

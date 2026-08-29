@@ -1,7 +1,7 @@
 # `vela-plugin` CLI Manual
 
 > Applies to vela-plugin **1.5.0** (`vela-plugin --version` tells you what you have).
-> See also (other repositories): [Development Guide](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs-en/dev-guide.md) · [Packaging and Publishing](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs-en/publishing.md) · [SDK Reference](https://github.com/VelaShellLabs/velashell-plugin-sdk/blob/main/docs-en/sdk-reference.md)
+> See also (other repositories): [Development Guide](https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs-en/dev-guide.md) · [Packaging and Publishing](https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs-en/publishing.md) · [SDK Reference](https://github.com/VelaShellLabs/velashell-plugin-sdk/blob/main/docs-en/sdk-reference.md)
 
 `vela-plugin` is the plugin author's command-line tool. It calls the same implementation the
 host uses (`VelaShell.PluginSdk`: manifest parsing, `.vpx` container, signature verification),

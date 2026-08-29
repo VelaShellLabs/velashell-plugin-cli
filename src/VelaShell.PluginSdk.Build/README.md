@@ -36,4 +36,4 @@ dotnet build -c Release -t:PackVpx -p:VelaSigningKey=/path/to/key.pem
 | `VelaValidateManifestOnBuild` | `true` | 构建后是否校验清单 |
 | `VelaSkipAvaloniaVersionCheck` | `false` | 跳过 Avalonia 版本一致性检查 |
 
-完整开发指南:<https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/dev-guide.md>
+完整开发指南:<https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/dev-guide.md>

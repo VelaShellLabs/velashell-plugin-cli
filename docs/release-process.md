@@ -3,7 +3,7 @@
 > 本篇只讲**本仓库**怎么发版。契约 SDK 见
 > [velashell-plugin-sdk](https://github.com/VelaShellLabs/velashell-plugin-sdk/blob/main/docs/release-process.md),
 > `dotnet new` 模板见
-> [velashell-plugin-templates](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/release-process.md)。
+> [velashell-plugin-templates](https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/release-process.md)。
 
 本仓库一次发布产出两个包,共用 Release 标签里的版本号:
 
@@ -103,12 +103,17 @@ Actions 页面 → 选 Release 工作流 → Run workflow → 填标签。推送
 
 ## 四、两个跨仓库旋钮:`Set-Version.ps1` 刻意不碰
 
-都在 `Directory.Build.props`。它们不是「版本号」,是**依赖决定**:
+它们不是「版本号」,是**依赖决定**:
 
-### `VelaSdkDependencyVersion` —— 引用哪一版契约 SDK
+### `VelaShell.PluginSdk` 的 `PackageReference` —— 引用哪一版契约 SDK
+
+落点是 `src/VelaShell.Plugin.Cli` 与 `src/VelaShell.PluginSdk.Build` 两个 csproj,
+**两处必须同版本**。刻意写字面量而不抽成 `Directory.Build.props` 里的 MSBuild 属性:
+`Version="$(...)"` 会让 Dependabot 与 `dotnet add package` 认不出这条依赖,而这个包
+正是要靠它们来更新的 —— 合掉 Dependabot 的 PR 就是常规抬法,它会把两处一起抬。
 
 抬它 = 让插件作者的**编译目标契约**变新。发一个只改了 `vela-plugin` 输出格式的补丁版时,
-不该顺手把这个也换掉 —— 所以它是一次独立的、需要想清楚的手工修改。
+不该顺手把这个也换掉 —— 所以它是一次独立的、需要想清楚的决定。
 
 抬完记得:
 
@@ -145,7 +150,7 @@ Actions 页面 → 选 Release 工作流 → Run workflow → 填标签。推送
 
 看你想不想让 `dotnet new velaplugin` 生成的工程指向新版 `.Build`。
 
-想 → 去 [velashell-plugin-templates](https://github.com/joesdu/velashell-plugin-templates)
+想 → 去 [velashell-plugin-templates](https://github.com/VelaShellLabs/velashell-plugin-templates)
 抬 `VelaBuildPackageVersion` 再发一版模板。
 
 不想 → 什么都不用做。新建的工程只是继续引用上一版 `.Build` 包,那是完全可用的 ——

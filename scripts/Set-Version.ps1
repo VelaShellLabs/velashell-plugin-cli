@@ -17,10 +17,11 @@
 
     docs 那两处不影响功能,但它们是给人照抄的,过期版本号会被原样粘进别人的工程。
 
-    **注意本脚本不碰 VelaSdkDependencyVersion。** 那是"本仓库引用哪一版契约 SDK",
+    **注意本脚本不碰 VelaShell.PluginSdk 的引用版本。** 那是"本仓库引用哪一版契约 SDK",
     与"本仓库自己发什么版本"是两件事 —— 拆库(2026-08-27)之后正是要让它们分开:
     发一个只改了 vela-plugin 输出格式的补丁版,不该顺手把插件作者的编译目标契约也换掉。
-    要抬契约版本就手工改 Directory.Build.props,那是一次独立的、需要想清楚的决定。
+    要抬契约版本就直接改两个 csproj 里的 PackageReference(或合掉 Dependabot 的 PR),
+    那是一次独立的、需要想清楚的决定。
 
     **不在本仓库的落点**(各自由所在仓库的同名脚本管):
       · VelaPluginApi.SdkVersion / apiLevel 纪律 ……… velashell-plugin-sdk
