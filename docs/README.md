@@ -13,9 +13,9 @@
 
 | 文档 | 去了哪 |
 | --- | --- |
-| **开发指南**(教程式,写第一个插件) | [velashell-plugin-templates / docs/dev-guide.md](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/dev-guide.md) |
-| **打包与发布**(`.vpx`、签名、发到插件商店) | [velashell-plugin-templates / docs/publishing.md](https://github.com/joesdu/velashell-plugin-templates/blob/main/docs/publishing.md) |
-| **SDK 参考**(契约表面、能力域一览) | [velashell-plugin-sdk / docs/sdk-reference.md](https://github.com/joesdu/velashell-plugin-sdk/blob/main/docs/sdk-reference.md) |
+| **开发指南**(教程式,写第一个插件) | [velashell-plugin-templates / docs/dev-guide.md](https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/dev-guide.md) |
+| **打包与发布**(`.vpx`、签名、发到插件商店) | [velashell-plugin-templates / docs/publishing.md](https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/publishing.md) |
+| **SDK 参考**(契约表面、能力域一览) | [velashell-plugin-sdk / docs/sdk-reference.md](https://github.com/VelaShellLabs/velashell-plugin-sdk/blob/main/docs/sdk-reference.md) |
 
 它们各自带着**自己那个包的版本号横幅**,所以必须跟包同仓库 —— 留在这里的话,
 契约 SDK 发一版就要来改本仓库的文档,正是拆库要消掉的那种牵连。

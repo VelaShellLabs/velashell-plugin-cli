@@ -10,7 +10,7 @@
 # 现象是插件作者构建到一半 Exec 失败 —— 所以它俩是一个发布单元,拆库时刻意留在同仓库。
 #
 # **另外三个包不在这里发**(2026-08-27 拆库起):
-#      VelaShell.PluginSdk / .Testing …… joesdu/velashell-plugin-sdk
+#      VelaShell.PluginSdk / .Testing …… VelaShellLabs/velashell-plugin-sdk
 #      VelaShell.Plugin.Templates ……… joesdu/velashell-plugin-templates
 # 三个仓库各有各的版本号。本仓库发 1.5.3 不代表契约动了,也不要求模板跟着发。
 #
@@ -36,7 +36,7 @@
 #   NuGet/login 拿本次运行的 GitHub OIDC 令牌去 nuget.org 换一把**短时效**的推送密钥,
 #   用完即弃。
 #   ⚠️ 首次发版前必须在 nuget.org 上为**本仓库**建一条可信发布策略:
-#        Repository owner  joesdu
+#        Repository owner  VelaShellLabs
 #        Repository        velashell-plugin-cli
 #        Workflow file     release.yml
 #      建法见 docs/release-process.md 的「NuGet 可信发布」一节。

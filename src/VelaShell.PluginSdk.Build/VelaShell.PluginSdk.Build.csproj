@@ -31,12 +31,11 @@
          版本旋钮 VelaSdkDependencyVersion 在仓库根 Directory.Build.props。
          这一条同时是下面 VerifyAvaloniaVersionPin 的**信息来源**:SDK 包的
          buildTransitive props 会把权威 Avalonia 版本导出成 $(VelaSdkPinnedAvaloniaVersion)。 -->
-    <PackageReference Include="VelaShell.PluginSdk" Version="$(VelaSdkDependencyVersion)" ExcludeAssets="runtime" PrivateAssets="none" />
+    <PackageReference Include="VelaShell.PluginSdk" Version="1.5.1" ExcludeAssets="runtime" PrivateAssets="none" />
     <!-- 打包器(vela-plugin)随本包分发到 tools/:插件工程无需安装任何全局工具即可出包。
          只借它的构建顺序与产物,不产生包依赖、不引用其程序集。
          这正是「.Build 与 vela-plugin 必须同仓库、同版本发」的物理原因。 -->
-    <ProjectReference Include="..\VelaShell.Plugin.Cli\VelaShell.Plugin.Cli.csproj"
-                      PrivateAssets="all" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\VelaShell.Plugin.Cli\VelaShell.Plugin.Cli.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" />
   </ItemGroup>
 
   <ItemGroup>
