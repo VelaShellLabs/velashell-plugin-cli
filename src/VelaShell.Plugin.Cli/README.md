@@ -67,7 +67,7 @@ vela-plugin dev init      # 生成 IDE 启动配置(读 ~/.velashell/host.json �
 插件工程 `dotnet build -t:PackVpx` 直接出包。装全局工具是为了开发内环、体检、
 签名与包检查。
 
-- 命令行手册:<https://github.com/VelaShellLabs/velashell-plugin-cli/blob/main/docs/cli.md>
-- 插件开发指南:<https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/dev-guide.md>
-- 打包与发布:<https://github.com/VelaShellLabs/velashell-plugin-templates/blob/main/docs/publishing.md>
+- 命令行手册:<https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/cli/cli.md>
+- 插件开发指南:<https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/templates/dev-guide.md>
+- 打包与发布:<https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/templates/publishing.md>
 - 插件商店:<http://market.easilynet.top>
