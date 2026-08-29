@@ -24,8 +24,10 @@
 
       **与契约 SDK 解耦**(2026-08-27 拆库起):VelaShell.PluginSdk 在
       VelaShellLabs/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
-      本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,把下面的
-      VelaSdkDependencyVersion 抬上来再发一版即可。
+      本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,直接把两个 csproj 里
+      VelaShell.PluginSdk 的 PackageReference 版本抬上来再发一版即可 —— 走 NuGet
+      (或合掉 Dependabot 的 PR)更新,**不要**抽成 MSBuild 属性:Version="$(...)"
+      会让 Dependabot 与 `dotnet add package` 认不出这条依赖。
 
       CI 发包时用 -p:VelaToolsVersion= 覆盖(取自 Release 标签)。
     -->

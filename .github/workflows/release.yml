@@ -11,7 +11,7 @@
 #
 # **另外三个包不在这里发**(2026-08-27 拆库起):
 #      VelaShell.PluginSdk / .Testing …… VelaShellLabs/velashell-plugin-sdk
-#      VelaShell.Plugin.Templates ……… joesdu/velashell-plugin-templates
+#      VelaShell.Plugin.Templates ……… VelaShellLabs/velashell-plugin-templates
 # 三个仓库各有各的版本号。本仓库发 1.5.3 不代表契约动了,也不要求模板跟着发。
 #
 # 📌 版本号:**发版前在本地落好、随功能改动一起合进 main**。
@@ -23,10 +23,10 @@
 #    下面的 Stamp 步骤只改 runner 上的工作区,**不回写仓库**:产物版本号因此永远等于
 #    Release 标签,与仓库里当时提交了什么无关。忘了第 ① 步的兜底是 CI 的版本同步体检。
 #
-# ⚠️ 想让插件作者吃到**新契约**,得另外手工抬 Directory.Build.props 里的
-#    VelaSdkDependencyVersion(Set-Version.ps1 刻意不碰它)—— 那是一次独立的决定,
-#    不该被"发个补丁版"顺手带上。抬完 VerifyAvaloniaVersionPin 会在构建期核对
-#    Avalonia 版本锁是否也要跟着动(VELA1006)。
+# ⚠️ 想让插件作者吃到**新契约**,得另外抬两个 csproj 里 VelaShell.PluginSdk 的
+#    PackageReference 版本(Set-Version.ps1 刻意不碰它;Dependabot 会替你提 PR)——
+#    那是一次独立的决定,不该被"发个补丁版"顺手带上。抬完 VerifyAvaloniaVersionPin
+#    会在构建期核对 Avalonia 版本锁是否也要跟着动(VELA1006)。
 #
 # ⚠️ 发完新版 .Build 之后,若希望 `dotnet new velaplugin` 生成的工程指向它,
 #    要去 velashell-plugin-templates 抬 VelaBuildPackageVersion 再发一版模板。
