@@ -39,7 +39,7 @@
 #        Repository owner  VelaShellLabs
 #        Repository        velashell-plugin-cli
 #        Workflow file     release.yml
-#      建法见 docs/release-process.md 的「NuGet 可信发布」一节。
+#      建法见 velashell-docs 的 zh/cli/release-process.md 的「NuGet 可信发布」一节。
 #
 # 本流水线**不需要任何仓库机密**:程序集不做强名称签名(那只开在 velashell-plugin-sdk
 # 那一支 —— 因为宿主要引用它),推送走 OIDC。
@@ -145,7 +145,7 @@ jobs:
 
       # Trusted Publishing:用本次运行的 OIDC 身份换一把短时效推送密钥。
       # 换不到密钥基本只有一个原因 —— nuget.org 上那条策略的 Repository / Workflow 字段
-      # 与本仓库对不上。详见 docs/release-process.md。
+      # 与本仓库对不上。详见 velashell-docs 的 zh/cli/release-process.md。
       - name: NuGet login (trusted publishing)
         id: nuget-login
         if: ${{ !inputs.dryRun }}
