@@ -43,23 +43,13 @@
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <!--
-      插件与宿主必须用同一版本的 Avalonia:装载器强制让 Avalonia* 回落到宿主那一套
-      (见宿主的 PluginAssemblyLoadContext),版本不一致时表现为跨 ALC 的控件类型对不上。
-
-      **这个版本号的权威在 velashell-plugin-sdk**,不在这里 —— 这里写的是一份必须与之
-      相等的副本。VelaShell.PluginSdk 包会把权威值导出成 $(VelaSdkPinnedAvaloniaVersion)
-      (buildTransitive),VelaShell.PluginSdk.Build 的 VerifyAvaloniaVersionPin 在构建期
-      把「这里」「包里给插件工程的默认值」「SDK 导出的权威值」三者比一遍,漂了就红。
-
-      为什么不直接用 $(VelaSdkPinnedAvaloniaVersion) 而要抄一份:那个属性来自 NuGet
-      还原之后生成的 obj/*.nuget.g.props,而 Avalonia 的 PackageReference 版本区间
-      是**还原本身**要读的输入 —— 冷还原时它还是空的,区间会变成 "[]" 直接失败。
-      所以只能写字面量 + 构建期核对。
-    -->
-    <VelaAvaloniaVersion>12.1.1</VelaAvaloniaVersion>
-  </PropertyGroup>
+  <!--
+    ⚠️ 插件生态的 Avalonia 版本**不在这里定义**。它是一条普通的 NuGet 依赖,版本写在
+    src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj 那条 PackageReference
+    的精确区间 [x.y.z] 上(以及包里发给插件工程的 build/VelaShell.PluginSdk.Build.props),
+    用 VS 的 NuGet 包管理器直接升即可。权威值在 velashell-plugin-sdk,由该包导出的
+    $(VelaSdkPinnedAvaloniaVersion) 在构建期核对(VELA1000 / VELA1006)。
+  -->
 
   <PropertyGroup>
   	<Authors>joesdu</Authors>
@@ -92,11 +82,6 @@
   	<Nullable>enable</Nullable>
   	<ImplicitUsings>enable</ImplicitUsings>
   	<NoWarn>$(NoWarn);IDE0047;</NoWarn>
-  </PropertyGroup>
-
-  <PropertyGroup>
-    <VelaRepoRoot>$(MSBuildThisFileDirectory)</VelaRepoRoot>
-    <VelaArtifactsDir Condition="'$(VelaArtifactsDir)' == ''">$(VelaRepoRoot)artifacts</VelaArtifactsDir>
   </PropertyGroup>
 
   <!--
