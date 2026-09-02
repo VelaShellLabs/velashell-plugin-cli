@@ -26,7 +26,7 @@
     <!-- PrivateAssets="none" 不能省:NuGet 默认不让 build/analyzers 资产传递给下游,
          而 Avalonia 的 **AXAML 编译器就在它的 build 资产里** —— 少了这一条,
          插件工程里的 .axaml 根本不会被编译,现象是运行时找不到控件而不是构建报错。 -->
-    <PackageReference Include="Avalonia" Version="[12.1.1]" ExcludeAssets="runtime" PrivateAssets="none" />
+    <PackageReference Include="Avalonia" Version="[12.1.2]" ExcludeAssets="runtime" PrivateAssets="none" />
     <!-- 拆库(2026-08-27)之后契约 SDK 也走 NuGet(原先是 ProjectReference)。
          版本就写在下面这一行的字面量上,由 NuGet(或合掉 Dependabot 的 PR)直接更新
          —— **不要**把它抽成 MSBuild 属性:Version="$(...)" 会让 Dependabot 与
@@ -36,7 +36,7 @@
          来自两份不同程序集。Dependabot 会把两处一起抬,手工改时别落下另一处。
          这一条同时是下面 VerifyAvaloniaVersionPin 的**信息来源**:SDK 包的
          buildTransitive props 会把权威 Avalonia 版本导出成 $(VelaSdkPinnedAvaloniaVersion)。 -->
-    <PackageReference Include="VelaShell.PluginSdk" Version="2.0.0" ExcludeAssets="runtime" PrivateAssets="none">
+    <PackageReference Include="VelaShell.PluginSdk" Version="2.0.2" ExcludeAssets="runtime" PrivateAssets="none">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <!-- 打包器(vela-plugin)随本包分发到 tools/:插件工程无需安装任何全局工具即可出包。
