@@ -31,7 +31,7 @@
 
       CI 发包时用 -p:VelaToolsVersion= 覆盖(取自 Release 标签)。
     -->
-    <VelaToolsVersion Condition="'$(VelaToolsVersion)' == ''">1.5.0</VelaToolsVersion>
+    <VelaToolsVersion Condition="'$(VelaToolsVersion)' == ''">2.0.2</VelaToolsVersion>
     <!-- 去掉预发布后缀的数字版(AssemblyVersion/FileVersion 不接受后缀)与主版本号。 -->
     <VelaToolsVersionCore>$([System.Text.RegularExpressions.Regex]::Replace($(VelaToolsVersion), '-.*$', ''))</VelaToolsVersionCore>
     <VelaToolsMajor>$([System.Text.RegularExpressions.Regex]::Replace($(VelaToolsVersionCore), '\..*$', ''))</VelaToolsMajor>

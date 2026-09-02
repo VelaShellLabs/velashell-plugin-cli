@@ -20,7 +20,7 @@
 
     <!-- 宿主的 Avalonia 版本。本包以精确区间锁死它;这里再留一份供 targets 核对
          (作者若直接引用了别的版本,NuGet 只给 NU1608 警告,下面把它升成错误)。 -->
-    <VelaAvaloniaVersion Condition="'$(VelaAvaloniaVersion)' == ''">12.1.1</VelaAvaloniaVersion>
+    <VelaAvaloniaVersion Condition="'$(VelaAvaloniaVersion)' == ''">12.1.2</VelaAvaloniaVersion>
 
     <!-- 版本冲突不许只是警告:插件与宿主的 Avalonia 版本不一致会在用户机器上才炸,
          而那时的现象(控件类型转换失败)离根因非常远。 -->
