@@ -54,7 +54,7 @@ public class VersionSelectionTests
         CliException error = Assert.ThrowsExactly<CliException>(
             () => Program.SelectVersion(plugin, "1.4", allowPrerelease: false));
         // 报错里要把可选版本列出来,否则用户只能去网页上翻。
-        StringAssert.Contains(error.Message, "1.4.1", StringComparison.Ordinal);
+        Assert.Contains("1.4.1", error.Message, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -63,7 +63,7 @@ public class VersionSelectionTests
         CliException error = Assert.ThrowsExactly<CliException>(
             () => Program.SelectVersion(PluginWith(), null, allowPrerelease: false));
 
-        StringAssert.Contains(error.Message, "no published versions", StringComparison.Ordinal);
+        Assert.Contains("no published versions", error.Message, StringComparison.Ordinal);
     }
 
     [TestMethod]
