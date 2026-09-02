@@ -8,8 +8,8 @@
          插件自己的单元测试连同插件一起搬去了 VelaShellLabs/velashell-plugins,
          Avalonia / AWSSDK.S3 / NSubstitute 那几条随之搬走。 -->
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.9.0" />
-    <PackageVersion Include="MSTest.TestAdapter" Version="4.3.3" />
-    <PackageVersion Include="MSTest.TestFramework" Version="4.3.3" />
+    <PackageVersion Include="MSTest.TestAdapter" Version="4.4.0" />
+    <PackageVersion Include="MSTest.TestFramework" Version="4.4.0" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
   </ItemGroup>
 </Project>
