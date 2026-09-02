@@ -18,11 +18,29 @@
     注意这条纪律的另一面:名字以 Avalonia 开头、而宿主并不提供的第三方包(例如社区控件库)
     在运行时同样会被强制共享而找不到 —— 这类依赖请选用不以 Avalonia 开头的包,或改由宿主提供。
   -->
+  <!--
+    ⚠️ 这里**不能**用 `<PackageReference Update="Avalonia" ... />`。
+    `Update` 只在求值阶段(工程正文的 ItemGroup)才是筛选器;写在 <Target> 里面时
+    MSBuild 直接忽略它,把元数据盖到**整份 @(PackageReference)** 上 —— 连
+    Update="ZZZ压根不存在" 都照盖不误(MSBuild 18.10 / 10.0.400 上均已复现)。
+    后果是插件工程的每一个 NuGet 依赖都被剥掉 runtime 资产:编译照过(compile 资产还在),
+    但 project.assets.json 里 runtime 全成了 "lib/xxx/_._",于是
+    CopyLocalLockFileAssemblies 一个依赖也复制不出来,deps.json 也只剩插件自己那一条。
+
+    这个坑还特别难认:`dotnet restore` **看不见** —— 还原时 NuGet 会设
+    ExcludeRestorePackageImports=true,本文件根本不被导入,本目标也就不运行。
+    只有 VS 的还原(走项目系统求值,包导入是在的)会中招,而且一旦中过一次,
+    往后每次 VS 还原都继续写坏 assets 文件,命令行怎么重建都救不回来。
+
+    在 <Target> 里按名字挑 item,只有 Condition + %(Identity) 这一条路。
+  -->
   <Target Name="VelaExcludeSharedRuntimeAssets" BeforeTargets="CollectPackageReferences">
     <ItemGroup>
-      <PackageReference Update="Avalonia" ExcludeAssets="runtime" />
-      <PackageReference Update="Avalonia.*" ExcludeAssets="runtime" />
-      <PackageReference Update="VelaShell.PluginSdk" ExcludeAssets="runtime" />
+      <PackageReference Condition="'%(Identity)' == 'Avalonia'
+                                   or $([System.String]::Copy('%(Identity)').StartsWith('Avalonia.'))
+                                   or '%(Identity)' == 'VelaShell.PluginSdk'">
+        <ExcludeAssets>runtime</ExcludeAssets>
+      </PackageReference>
     </ItemGroup>
   </Target>
 
