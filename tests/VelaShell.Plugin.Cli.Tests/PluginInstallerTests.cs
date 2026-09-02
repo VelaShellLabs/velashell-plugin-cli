@@ -88,7 +88,7 @@ public class PluginInstallerTests
         CliException error = Assert.ThrowsExactly<CliException>(
             () => PluginInstaller.Install(package, Options(allowUnsigned: false)));
 
-        StringAssert.Contains(error.Message, "--allow-unsigned", StringComparison.Ordinal);
+        Assert.Contains("--allow-unsigned", error.Message, StringComparison.Ordinal);
         Assert.IsFalse(Directory.Exists(Path.Combine(_pluginsRoot, "acme.tool")),
             "被拒的包不该留下任何目录");
     }
@@ -129,7 +129,7 @@ public class PluginInstallerTests
 
         CliException error = Assert.ThrowsExactly<CliException>(() => PluginInstaller.Install(
             package, Options(trust: "SHA256:0000", force: true)));
-        StringAssert.Contains(error.Message, "Publisher mismatch", StringComparison.Ordinal);
+        Assert.Contains("Publisher mismatch", error.Message, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -140,7 +140,7 @@ public class PluginInstallerTests
         CliException error = Assert.ThrowsExactly<CliException>(
             () => PluginInstaller.Install(Pack(), Options(trust: "SHA256:0000")));
 
-        StringAssert.Contains(error.Message, "not signed", StringComparison.Ordinal);
+        Assert.Contains("not signed", error.Message, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -167,7 +167,7 @@ public class PluginInstallerTests
         CliException error = Assert.ThrowsExactly<CliException>(
             () => PluginInstaller.Install(Pack(id: "acme.tool"), Options(), expectedId: "other.plugin"));
 
-        StringAssert.Contains(error.Message, "another id", StringComparison.Ordinal);
+        Assert.Contains("another id", error.Message, StringComparison.Ordinal);
         Assert.IsFalse(Directory.Exists(Path.Combine(_pluginsRoot, "acme.tool")));
     }
 
@@ -187,7 +187,7 @@ public class PluginInstallerTests
         PluginInstaller.Install(package, Options());
 
         CliException error = Assert.ThrowsExactly<CliException>(() => PluginInstaller.Install(package, Options()));
-        StringAssert.Contains(error.Message, "--force", StringComparison.Ordinal);
+        Assert.Contains("--force", error.Message, StringComparison.Ordinal);
 
         Assert.AreEqual("1.0.0", PluginInstaller.Install(package, Options(force: true)).Version);
     }
@@ -308,7 +308,7 @@ public class PluginInstallerTests
         CliException error = Assert.ThrowsExactly<CliException>(
             () => PluginInstaller.ExtractZipSafely(evil, destination));
 
-        StringAssert.Contains(error.Message, "escapes the destination", StringComparison.Ordinal);
+        Assert.Contains("escapes the destination", error.Message, StringComparison.Ordinal);
         Assert.IsFalse(File.Exists(Path.Combine(_work, "escaped.txt")));
     }
 }
