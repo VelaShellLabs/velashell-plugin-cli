@@ -23,7 +23,6 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj" />
-    <Project Path="src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <File Path="tests/Directory.Build.props" />

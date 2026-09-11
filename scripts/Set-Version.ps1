@@ -4,14 +4,16 @@
     把工具链版本号写进本仓库里所有需要它的地方。
 
 .DESCRIPTION
-    本仓库产出两个**同版本发布**的包(理由见 Directory.Build.props 的注释):
+    本仓库产出一个包:
 
       VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
-      VelaShell.PluginSdk.Build     插件工程引用的那一个包
+
+    (VelaShell.PluginSdk.Build 已于 2026-09-11 搬去 VelaShellLabs/velashell-plugin-sdk,
+     在那边与契约包同版本发布。理由见 Directory.Build.props 的注释。)
 
     落点三处:
 
-      Directory.Build.props            <VelaToolsVersion>        —— 两个包的版本
+      Directory.Build.props            <VelaToolsVersion>        —— 包版本的默认值
       zh/cli/cli.md                    版本横幅       ┐ 这两处在 velashell-docs 仓库,
       en/cli/cli.md                    version banner ┘ 是**可选**落点,见 -DocsRoot
 
@@ -19,11 +21,11 @@
     2026-08-30 全部文档搬到 VelaShellLabs/velashell-docs 之后,它们不在本仓库的
     checkout 里,所以找不到就跳过。
 
-    **注意本脚本不碰 VelaShell.PluginSdk 的引用版本。** 那是"本仓库引用哪一版契约 SDK",
-    与"本仓库自己发什么版本"是两件事 —— 拆库(2026-08-27)之后正是要让它们分开:
-    发一个只改了 vela-plugin 输出格式的补丁版,不该顺手把插件作者的编译目标契约也换掉。
-    要抬契约版本就直接改两个 csproj 里的 PackageReference(或合掉 Dependabot 的 PR),
-    那是一次独立的、需要想清楚的决定。
+    **注意本脚本不碰 VelaShell.PluginSdk 的引用版本。** 那是"打包器自己拿哪一版契约去读
+    清单与 .vpx 容器",与"本仓库自己发什么版本"是两件事 —— 拆库(2026-08-27)之后正是要让
+    它们分开。要抬就直接改 src/VelaShell.Plugin.Cli 的 PackageReference(或合掉 Dependabot
+    的 PR),那是一次独立的、需要想清楚的决定。
+    (插件作者的**编译目标**契约与本仓库无关,由 velashell-plugin-sdk 的 .Build 决定。)
 
     **不在本仓库的落点**(各自由所在仓库的同名脚本管):
       · VelaPluginApi.SdkVersion / apiLevel 纪律 ……… velashell-plugin-sdk
@@ -31,10 +33,9 @@
       · velashell-docs 里 zh|en/templates/dev-guide.md 的 PackageReference 片段
                                                     … velashell-plugin-templates
 
-    ⚠️ 有一条跨仓库的**手工**后续动作:本仓库发了新版 VelaShell.PluginSdk.Build 之后,
-       若希望 `dotnet new velaplugin` 生成的工程指向新版,要去 templates 仓库把
-       VelaBuildPackageVersion 抬上来再发一版模板。不做也不会坏 —— 新建的工程只是
-       继续引用上一版 .Build 包,那是完全可用的。
+    本仓库**没有下游**:插件工程出包用的打包器由 velashell-plugin-sdk 的
+    VelaShell.PluginSdk.Build 自带,不是这个工具。所以发版不需要通知谁、也没有跨仓库的
+    后续动作要做。
 
     发版流水线在解析出 Release 标签之后**第一件事**也会跑本脚本
     (见 .github/workflows/release.yml),因此产物永远与标签一致。它只改 runner 上的

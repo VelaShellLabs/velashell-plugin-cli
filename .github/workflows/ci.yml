@@ -1,6 +1,10 @@
-# vela-plugin 与 VelaShell.PluginSdk.Build 的日常验证。
+# vela-plugin 的日常验证。
 # 发布不走这里(见 release.yml),但**发布会做的事这里全都做一遍** ——
 # 唯一差别是不推 nuget.org。
+#
+# 本仓库自 2026-09-11 起只产出一个包:VelaShell.PluginSdk.Build 搬去了
+# VelaShellLabs/velashell-plugin-sdk(它与契约同版本发布才对),端到端冒烟随它一起搬走,
+# 打包器也在那边自带(VelaShell.PluginSdk.Packer)。本仓库因此不再有任何下游。
 #
 # 注意本仓库**不需要任何机密**:程序集不做强名称签名(那只开在 velashell-plugin-sdk
 # 那一支),推送用 OIDC。于是 fork PR 与主分支跑的是完全同一条路径,没有"拿不到密钥
@@ -49,9 +53,6 @@ jobs:
           # 那时它是 $null —— 而 `$null -ne 0` 为真,会把一次成功判成失败。
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
 
-      # 跨仓库的 Avalonia 版本锁核对(VELA1005 / VELA1006)就在这一步的构建里发生:
-      # VelaShell.PluginSdk 包把权威版本导出成 $(VelaSdkPinnedAvaloniaVersion),
-      # VelaShell.PluginSdk.Build 的 VerifyAvaloniaVersionPin 拿它跟本仓库的副本比。
       - name: Test
         shell: pwsh
         run: |
@@ -63,30 +64,13 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.version }}'
           New-Item -ItemType Directory -Force artifacts/nuget | Out-Null
-          # 顺序不能反:VelaShell.PluginSdk.Build 的 AddVelaCliToPackage 要去
-          # src/VelaShell.Plugin.Cli/bin/Release/ 收打包器的产物。
-          $projects = @(
-            'src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj',
-            'src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj'
-          )
-          foreach ($project in $projects) {
-            dotnet pack $project -c Release -o artifacts/nuget -p:VelaToolsVersion=$version --nologo
-            if ($LASTEXITCODE -ne 0) { exit 1 }
-          }
+          dotnet pack src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj -c Release -o artifacts/nuget -p:VelaToolsVersion=$version --nologo
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           Get-ChildItem artifacts/nuget | Select-Object -ExpandProperty Name
 
-      # 端到端冒烟:拿刚打出的包,站在插件作者的位置上走一遍
-      # (最小插件工程 → 还原 → 构建 → 出 .vpx → 读回容器 → 查共享程序集有没有漏)。
-      # 夹具在 tests/smoke/,细节见 scripts/Invoke-Smoke.ps1 的注释。
-      # 这一步不是形式:插件工程是**仓库外环境**,仓库内的 Directory.Build.props 一条也
-      # 吃不到,而历史上两个最难查的坑(CA2252 全线报错、AXAML 编译器到不了插件工程)
-      # 都只有在这个前提下才会显形。
-      - name: Smoke test (plugin project -> build -> .vpx)
-        shell: pwsh
-        run: |
-          & ./scripts/Invoke-Smoke.ps1 -Feed ./artifacts/nuget -Version '${{ steps.version.outputs.version }}'
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-
+      # 注:插件工程的端到端冒烟(最小插件工程 → 构建 → 出 .vpx)不在这里跑了 ——
+      # 它验的是 VelaShell.PluginSdk.Build,那个包 2026-09-11 搬去了 velashell-plugin-sdk,
+      # 冒烟连同 tests/smoke/ 夹具一起跟了过去,那边也自带打包器。本仓库与它再无构建期关系。
       - uses: actions/upload-artifact@v7
         with:
           name: nuget-packages

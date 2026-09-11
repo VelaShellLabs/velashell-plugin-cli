@@ -63,9 +63,9 @@ vela-plugin dev init      # 生成 IDE 启动配置(读 ~/.velashell/host.json �
 > 安装收据**做事后防篡改(密钥在宿主进程里,CLI 造不出来);作为交换,能在装之前做完的检查
 > 命令行一条不少。要那层事后保护就走管理页。
 
-打包不必装这个工具:`VelaShell.PluginSdk.Build` 包内已带同一份可执行体,
-插件工程 `dotnet build -t:PackVpx` 直接出包。装全局工具是为了开发内环、体检、
-签名与包检查。
+打包不必装这个工具:`VelaShell.PluginSdk.Build` 包内自带一个打包器,插件工程
+`dotnet build -t:PackVpx` 直接出包(两边走同一套 `.vpx` 容器实现,包格式完全一致)。
+装全局工具是为了开发内环、体检、签名与包检查。
 
 - 命令行手册:<https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/cli/cli.md>
 - 插件开发指南:<https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/templates/dev-guide.md>
