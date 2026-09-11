@@ -36,7 +36,7 @@
          来自两份不同程序集。Dependabot 会把两处一起抬,手工改时别落下另一处。
          这一条同时是下面 VerifyAvaloniaVersionPin 的**信息来源**:SDK 包的
          buildTransitive props 会把权威 Avalonia 版本导出成 $(VelaSdkPinnedAvaloniaVersion)。 -->
-    <PackageReference Include="VelaShell.PluginSdk" Version="2.0.2" ExcludeAssets="runtime" PrivateAssets="none">
+    <PackageReference Include="VelaShell.PluginSdk" Version="2.0.4" ExcludeAssets="runtime" PrivateAssets="none">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <!-- 打包器(vela-plugin)随本包分发到 tools/:插件工程无需安装任何全局工具即可出包。
