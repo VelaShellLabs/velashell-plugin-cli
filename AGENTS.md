@@ -37,38 +37,42 @@ VelaShell 生态的**全部文档**集中在一个仓库:
 - **例外**:留在代码仓库里的少数几份文件不适用上述规则,因为它们服务的是「在这个仓库里写代码」
   这件事,搬走只会离使用场景更远。各仓库的例外清单见下面第三节。
 
-## 三、本仓库:velashell-plugin-cli(命令行与构建支持包)
+## 三、本仓库:velashell-plugin-cli(插件命令行工具)
 
-产出 `VelaShell.Plugin.Cli`(dotnet tool `vela-plugin`)与 `VelaShell.PluginSdk.Build`
-(插件工程**只需引用这一个包**)。两者**始终同版本发**:`.Build` 把 `vela-plugin` 的构建产物
-收进包的 `tools/`,它的 targets 直接调那个打包器的命令面,参数改了而 targets 没跟上,
-现象是插件作者构建到一半 `Exec` 失败。
+产出**一个**包:`VelaShell.Plugin.Cli`(dotnet tool `vela-plugin`)。
+
+`VelaShell.PluginSdk.Build` 已于 2026-09-11 搬去 `VelaShellLabs/velashell-plugin-sdk`
+—— 它决定的是插件作者**编译时看到的那份契约**,所以属于契约仓库,在那边与契约同版本发布。
+端到端冒烟(`scripts/Invoke-Smoke.ps1` + `tests/smoke/`)随它一起搬走了。
+
+### 本仓库没有下游
+
+插件工程 `dotnet build -t:PackVpx` 用的**不是**这个工具:`.Build` 自带一个三条命令的打包器
+(那边的 `VelaShell.PluginSdk.Packer`)。两边都走 `VelaShell.PluginSdk` 里的同一个
+`VpxContainer`,包格式一致由类型保证,不靠版本号约定 —— 所以改 `vela-plugin` 的命令面
+不会波及任何别的仓库,也没有跨仓库的后续动作要做。
+
+`vela-plugin` 自己的定位:面向人的完整工具(商店、开发内环、签名、体检)。
 
 ### 构建与测试
 
 ```bash
 dotnet build VelaShell.Plugin.Cli.slnx
 dotnet test  VelaShell.Plugin.Cli.slnx -c Debug
-
-# 端到端冒烟:拿刚打出的包当插件作者走一遍
-dotnet pack src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj -c Release -o artifacts/nuget
-dotnet pack src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj -c Release -o artifacts/nuget
-pwsh scripts/Invoke-Smoke.ps1 -Feed ./artifacts/nuget -Version <版本>
+dotnet pack  src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj -c Release -o artifacts/nuget
 ```
 
-冒烟夹具在 `tests/smoke/`:一个手写的最小插件工程,刻意带两个空的
-`Directory.Build.props`/`.targets` 来切断向上查找 —— **插件工程是仓库外环境,仓库内的构建约定
-一条也吃不到**,冒烟的全部价值就在这里。改打包器或 targets 后必须跑它。
-
-### 两个跨仓库旋钮(都不由 Set-Version.ps1 管)
+### 唯一的跨仓库旋钮(不由 Set-Version.ps1 管)
 
 | 旋钮 | 在哪 | 抬它意味着 |
 | --- | --- | --- |
-| `VelaShell.PluginSdk` 的 `PackageReference` | 两个 csproj,**必须同版本** | 插件作者的编译目标契约变新。只改了输出格式的补丁版不该顺手带上 |
-| `VelaAvaloniaVersion` | `Directory.Build.props` | 权威在 sdk 仓库,这里只是副本。漂了报 `VELA1006` |
+| `VelaShell.PluginSdk` 的 `PackageReference` | `src/VelaShell.Plugin.Cli` 的 csproj | **打包器自己**读清单与 `.vpx` 容器用的那份契约变新。只改了输出格式的补丁版不该顺手带上 |
 
-契约 SDK 的版本刻意写成**字面量**、不抽成 MSBuild 属性:`Version="$(...)"` 会让
-Dependabot 与 `dotnet add package` 认不出这条依赖。
+版本刻意写成**字面量**、不抽成 MSBuild 属性:`Version="$(...)"` 会让 Dependabot 与
+`dotnet add package` 认不出这条依赖。
+
+Avalonia 版本锁与它的构建期核对(`VELA1000` / `VELA1006`)在本仓库已不存在 ——
+随 `.Build` 搬去了 sdk 仓库,权威值本来就在那里。
 
 ### 发版脚本会写 velashell-docs
 

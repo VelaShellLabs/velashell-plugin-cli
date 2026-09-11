@@ -8,8 +8,10 @@
     <PackageTags>velashell;plugin;cli;dotnet-tool;vpx</PackageTags>
 
     <!-- 打成 dotnet tool:`dotnet tool install -g VelaShell.Plugin.Cli` 后即有 `vela-plugin` 命令。
-         同一份构建产物还会被 VelaShell.PluginSdk.Build 包收进 tools/,
-         让 `dotnet build -t:PackVpx` 无需安装任何工具就能出包。 -->
+         注:插件工程 `dotnet build -t:PackVpx` 用的**不是**这个工具 —— VelaShell.PluginSdk.Build
+         自带一个只有三条命令的打包器(velashell-plugin-sdk 的 VelaShell.PluginSdk.Packer)。
+         两边都过 VelaShell.PluginSdk 里的同一个 VpxContainer,所以包格式天然一致;
+         装这个全局工具是为了商店、开发内环、签名与包检查。 -->
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>vela-plugin</ToolCommandName>
 

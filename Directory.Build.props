@@ -14,17 +14,22 @@
 
   <PropertyGroup>
     <!--
-      本仓库产出两个包,共用这个版本号:
+      本仓库产出**一个**包:
           VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
-          VelaShell.PluginSdk.Build     插件工程引用的那一个包(targets + 打包器 + 依赖锁)
 
-      这两个**必须同版本发**:.Build 把 vela-plugin 的构建产物收进包的 tools/,
-      它的 targets 直接调那个打包器的命令面(`validate` / `pack`)。命令行参数改了而
-      targets 没跟上,现象是插件作者构建到一半 Exec 失败 —— 所以它俩是一个发布单元。
+      属性名仍叫 VelaToolsVersion(没跟着改成 VelaCliVersion):CI、Set-Version.ps1 与
+      velashell-docs 的发版流程都按这个名字对接,改名只是让几处一起动一遍,换不来什么。
+
+      **VelaShell.PluginSdk.Build 不再在本仓库**(2026-09-11 起):它搬去了
+      VelaShellLabs/velashell-plugin-sdk,在那边与契约包同版本、同一次发布 —— 它发给插件
+      工程的那份契约就是那个仓库当时那一版,这正是搬过去的理由。
+      那边的 .Build 自带打包器(VelaShell.PluginSdk.Packer,同仓库的一个小工程,走同一个
+      VpxContainer),**不引用本仓库的任何东西**。所以两边没有任何耦合可言:本仓库只是
+      vela-plugin 这一个面向人的工具,发不发版与插件工程能不能出包毫无关系。
 
       **与契约 SDK 解耦**(2026-08-27 拆库起):VelaShell.PluginSdk 在
       VelaShellLabs/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
-      本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,直接把两个 csproj 里
+      本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,直接把 src/VelaShell.Plugin.Cli 里
       VelaShell.PluginSdk 的 PackageReference 版本抬上来再发一版即可 —— 走 NuGet
       (或合掉 Dependabot 的 PR)更新,**不要**抽成 MSBuild 属性:Version="$(...)"
       会让 Dependabot 与 `dotnet add package` 认不出这条依赖。
@@ -44,11 +49,9 @@
   </PropertyGroup>
 
   <!--
-    ⚠️ 插件生态的 Avalonia 版本**不在这里定义**。它是一条普通的 NuGet 依赖,版本写在
-    src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj 那条 PackageReference
-    的精确区间 [x.y.z] 上(以及包里发给插件工程的 build/VelaShell.PluginSdk.Build.props),
-    用 VS 的 NuGet 包管理器直接升即可。权威值在 velashell-plugin-sdk,由该包导出的
-    $(VelaSdkPinnedAvaloniaVersion) 在构建期核对(VELA1000 / VELA1006)。
+    ⚠️ 本仓库与 Avalonia 再无关系(2026-09-11 起)。vela-plugin 是纯命令行工具,不引用
+    Avalonia;插件生态那个 Avalonia 版本锁的副本与它的构建期核对(VELA1000 / VELA1006)
+    随 VelaShell.PluginSdk.Build 一起搬去了 velashell-plugin-sdk —— 权威值本来就在那里。
   -->
 
   <PropertyGroup>

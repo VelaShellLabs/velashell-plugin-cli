@@ -1,17 +1,20 @@
-# 插件工具链(CLI + 构建支持包)的发布流水线:在 GitHub 页面**发布 Release** 时自动触发。
+# vela-plugin 的发布流水线:在 GitHub 页面**发布 Release** 时自动触发。
 #
-# 一次发布产出两个 NuGet 包,共用 Release 标签里的那个版本号:
+# 一次发布产出一个 NuGet 包,版本号取自 Release 标签:
 #
 #      VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
-#      VelaShell.PluginSdk.Build     插件工程引用的那一个包(targets + 打包器 + 依赖锁)
 #
-# 这两个**必须同版本发**:.Build 把 vela-plugin 的构建产物收进包的 tools/,它的 targets
-# 直接调那个打包器的命令面(`validate` / `pack`)。命令行参数改了而 targets 没跟上,
-# 现象是插件作者构建到一半 Exec 失败 —— 所以它俩是一个发布单元,拆库时刻意留在同仓库。
+# 2026-09-11 起 **VelaShell.PluginSdk.Build 不在本仓库发**:它搬去了
+# VelaShellLabs/velashell-plugin-sdk,在那边与契约包同版本、同一次发布。插件工程用的打包器
+# 也在那边自带(VelaShell.PluginSdk.Packer,与契约同仓库、同一次构建)。
 #
-# **另外三个包不在这里发**(2026-08-27 拆库起):
-#      VelaShell.PluginSdk / .Testing …… VelaShellLabs/velashell-plugin-sdk
-#      VelaShell.Plugin.Templates ……… VelaShellLabs/velashell-plugin-templates
+# 于是本仓库**没有任何下游**:vela-plugin 是面向人的工具(商店、开发内环、签名、体检),
+# 发不发版与插件作者能不能 `dotnet build -t:PackVpx` 出包毫无关系。两边都过同一个
+# VpxContainer(在 VelaShell.PluginSdk 里),包格式的一致性由类型保证,不靠版本号约定。
+#
+# **其余的包不在这里发**:
+#      VelaShell.PluginSdk / .Testing / .Build …… VelaShellLabs/velashell-plugin-sdk
+#      VelaShell.Plugin.Templates ………………… VelaShellLabs/velashell-plugin-templates
 # 三个仓库各有各的版本号。本仓库发 1.5.3 不代表契约动了,也不要求模板跟着发。
 #
 # 📌 版本号:**发版前在本地落好、随功能改动一起合进 main**。
@@ -23,14 +26,11 @@
 #    下面的 Stamp 步骤只改 runner 上的工作区,**不回写仓库**:产物版本号因此永远等于
 #    Release 标签,与仓库里当时提交了什么无关。忘了第 ① 步的兜底是 CI 的版本同步体检。
 #
-# ⚠️ 想让插件作者吃到**新契约**,得另外抬两个 csproj 里 VelaShell.PluginSdk 的
-#    PackageReference 版本(Set-Version.ps1 刻意不碰它;Dependabot 会替你提 PR)——
-#    那是一次独立的决定,不该被"发个补丁版"顺手带上。抬完 VerifyAvaloniaVersionPin
-#    会在构建期核对 Avalonia 版本锁是否也要跟着动(VELA1006)。
-#
-# ⚠️ 发完新版 .Build 之后,若希望 `dotnet new velaplugin` 生成的工程指向它,
-#    要去 velashell-plugin-templates 抬 VelaBuildPackageVersion 再发一版模板。
-#    不做也不会坏 —— 新建的工程只是继续引用上一版 .Build 包,那是完全可用的。
+# ⚠️ 想让 vela-plugin 吃到**新契约**,得另外抬 src/VelaShell.Plugin.Cli 里
+#    VelaShell.PluginSdk 的 PackageReference 版本(Set-Version.ps1 刻意不碰它;
+#    Dependabot 会替你提 PR)—— 那是一次独立的决定,不该被"发个补丁版"顺手带上。
+#    注意它管的只是**打包器自己**读清单与 .vpx 容器用的那份契约;插件作者的编译目标契约
+#    由 velashell-plugin-sdk 的 .Build 决定,与本仓库无关。
 #
 # 推送用 **NuGet Trusted Publishing(OIDC)**,不存 API Key:
 #   NuGet/login 拿本次运行的 GitHub OIDC 令牌去 nuget.org 换一把**短时效**的推送密钥,
@@ -57,7 +57,7 @@ on:
         required: true
         type: string
       dryRun:
-        description: '只打包与冒烟,不推送 nuget.org'
+        description: '只打包,不推送 nuget.org'
         required: false
         default: false
         type: boolean
@@ -105,7 +105,6 @@ jobs:
           if ($LASTEXITCODE) { exit $LASTEXITCODE }
           git --no-pager diff --stat
 
-      # 跨仓库的 Avalonia 版本锁核对(VELA1005 / VELA1006)就在这一步的构建里发生。
       - name: Test
         shell: pwsh
         run: |
@@ -117,26 +116,12 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.version }}'
           New-Item -ItemType Directory -Force artifacts/nuget | Out-Null
-          # 顺序不能反:VelaShell.PluginSdk.Build 的 AddVelaCliToPackage 要去
-          # src/VelaShell.Plugin.Cli/bin/Release/ 收打包器的产物。
-          $projects = @(
-            'src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj',
-            'src/VelaShell.PluginSdk.Build/VelaShell.PluginSdk.Build.csproj'
-          )
-          foreach ($project in $projects) {
-            dotnet pack $project -c Release -o artifacts/nuget -p:VelaToolsVersion=$version --nologo
-            if ($LASTEXITCODE -ne 0) { exit 1 }
-          }
+          dotnet pack src/VelaShell.Plugin.Cli/VelaShell.Plugin.Cli.csproj -c Release -o artifacts/nuget -p:VelaToolsVersion=$version --nologo
+          if ($LASTEXITCODE -ne 0) { exit 1 }
           Get-ChildItem artifacts/nuget | Select-Object -ExpandProperty Name
 
-      # 端到端冒烟:完全站在插件作者的位置上 —— 从刚打出的包还原、构建、出 .vpx,
-      # 最后确认包能被容器读回来、共享程序集没漏进插件输出目录。任何一步失败都不该发出去。
-      - name: Smoke test (plugin project -> build -> .vpx)
-        shell: pwsh
-        run: |
-          & ./scripts/Invoke-Smoke.ps1 -Feed ./artifacts/nuget -Version '${{ steps.version.outputs.version }}'
-          if ($LASTEXITCODE) { exit $LASTEXITCODE }
-
+      # 注:插件工程的端到端冒烟随 VelaShell.PluginSdk.Build 搬去了 velashell-plugin-sdk,
+      # 那边自带打包器,与本仓库无关。
       - uses: actions/upload-artifact@v7
         with:
           name: nuget-packages
