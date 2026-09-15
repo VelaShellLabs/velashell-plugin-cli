@@ -85,3 +85,7 @@ Avalonia 版本锁与它的构建期核对(`VELA1000` / `VELA1006`)在本仓库�
 ### 留在本仓库的文档
 
 `README.md`、`LICENSE`,以及 `src/**/README.md`。CLI 手册与发版流程都在 velashell-docs。
+
+### 提交约束
+
+- **所有提交信息与 PR 描述都不要附加 Claude Code 等 AI 工具的作者信息** —— 不加 `Co-Authored-By: Claude …` 行,也不加 `🤖 Generated with Claude Code` 之类的署名。VelaShellLabs 下所有仓库一致适用。
