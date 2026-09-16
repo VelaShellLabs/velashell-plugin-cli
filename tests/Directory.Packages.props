@@ -7,7 +7,7 @@
          它不碰 Avalonia、不碰任何插件的第三方依赖,所以这里也就只有这四条。
          插件自己的单元测试连同插件一起搬去了 VelaShellLabs/velashell-plugins,
          Avalonia / AWSSDK.S3 / NSubstitute 那几条随之搬走。 -->
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageVersion Include="MSTest.TestAdapter" Version="4.4.0" />
     <PackageVersion Include="MSTest.TestFramework" Version="4.4.0" />
     <PackageVersion Include="coverlet.collector" Version="10.0.1" />
