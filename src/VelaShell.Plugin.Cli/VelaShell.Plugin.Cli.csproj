@@ -21,7 +21,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="VelaShell.PluginSdk" Version="2.1.1" />
+    <PackageReference Include="VelaShell.PluginSdk" Version="2.1.2" />
   </ItemGroup>
 
   <ItemGroup>
