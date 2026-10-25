@@ -8,6 +8,7 @@ using VelaShell.PluginSdk;
 using VelaShell.PluginSdk.Hosting;
 using VelaShell.PluginSdk.Manifest;
 using VelaShell.PluginSdk.Packaging;
+using VelaShell.PluginSdk.Versioning;
 
 namespace VelaShell.Plugin.Cli;
 
@@ -488,6 +489,16 @@ internal static partial class Program
         }
         PluginManifest manifest = PluginManifestReader.Load(manifestPath);
         Console.WriteLine($"plugin      {manifest.Id} v{manifest.Version} [{manifest.HostMode}] api {manifest.ApiLevel}");
+        try
+        {
+            ManifestVersionRules.Require(manifest);
+        }
+        catch (PluginManifestException ex)
+        {
+            // 体检要把问题列全,不在第一条上退出;pack 与商店上传会拒这一条。
+            Warn($"{ex.Message} `vela-plugin pack` and the marketplace will refuse it.");
+            problems++;
+        }
         if (host is not null)
         {
             problems += WarnOnHostMismatch(manifest, host);
@@ -707,22 +718,27 @@ internal static partial class Program
     private const string DevListFileName = "plugins.dev.txt";
 
     /// <summary>
-    /// <paramref name="actual" /> 是否比 <paramref name="required" /> 老。与宿主同一口径:
-    /// 忽略预发布后缀,任一侧解析不出版本号就不判老(拦一个版本号写得怪的插件,损失大于收益)。
+    /// 装载闸(<c>minSdkVersion</c> / <c>minHostVersion</c>):<paramref name="actual" /> 是否低于 <paramref name="required" />。
+    /// 与宿主同一口径 —— <see cref="SemanticVersion.CompareCoreTo" />,只比数字段、忽略预发布
+    /// (<c>1.1.0-beta</c> 的宿主不该装不上写着 <c>minHostVersion: 1.1.0</c> 的插件);
+    /// 任一侧解析不出就不判低(拦一个版本号写得怪的插件,损失大于收益)。
+    /// <para>「哪个更新」不走这里,见 <see cref="IsNewer" />。</para>
     /// </summary>
-    private static bool IsOlder(string actual, string required)
-    {
-        static Version? ParseNumeric(string v)
-        {
-            string numeric = v.Split('-', 2)[0];
-            if (!numeric.Contains('.', StringComparison.Ordinal))
-            {
-                numeric += ".0";
-            }
-            return Version.TryParse(numeric, out Version? parsed) ? parsed : null;
-        }
-        return ParseNumeric(actual) is { } left && ParseNumeric(required) is { } right && left < right;
-    }
+    internal static bool IsOlder(string actual, string required) =>
+        SemanticVersion.TryParse(actual, out SemanticVersion left)
+        && SemanticVersion.TryParse(required, out SemanticVersion right)
+        && left.CompareCoreTo(right) < 0;
+
+    /// <summary>
+    /// 升级判断:<paramref name="candidate" /> 是否比 <paramref name="installed" /> 新。按完整 SemVer 优先级
+    /// (<see cref="SemanticVersion.CompareTo" />),所以装着 <c>1.2.0-beta.1</c> 时商店上的 <c>1.2.0</c> 算更新 ——
+    /// 与宿主插件管理页的「有更新」同一口径。任一侧解析不出时返回 <see langword="null" />(比不出先后)。
+    /// </summary>
+    internal static bool? IsNewer(string candidate, string installed) =>
+        SemanticVersion.TryParse(candidate, out SemanticVersion remote)
+        && SemanticVersion.TryParse(installed, out SemanticVersion local)
+            ? remote.CompareTo(local) > 0
+            : null;
 
     /// <summary>把一个插件输出目录登记进 / 移出 plugins.dev.txt(开发期挂载)。</summary>
     private static int DevLink(string[] args, bool remove)
@@ -788,7 +804,7 @@ internal static partial class Program
     internal static string DataRoot => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".velashell");
 
-    private static PluginManifest LoadManifest(string directory)
+    internal static PluginManifest LoadManifest(string directory)
     {
         string manifestPath = Path.Combine(directory, PluginManifestReader.FileName);
         if (!File.Exists(manifestPath))
@@ -796,7 +812,10 @@ internal static partial class Program
             throw new CliException($"No {PluginManifestReader.FileName} in '{directory}'. " +
                                    "Point the command at the plugin's build output directory.");
         }
-        return PluginManifestReader.Load(manifestPath);
+        PluginManifest manifest = PluginManifestReader.Load(manifestPath);
+        // pack / validate 是作者这一侧的闸:版本号按商店上传审核同一口径收紧,别等上传了才被退回。
+        ManifestVersionRules.Require(manifest);
+        return manifest;
     }
 
     private static void RequireEntry(string directory, PluginManifest manifest)

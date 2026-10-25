@@ -3,6 +3,7 @@ using VelaShell.PluginSdk;
 using VelaShell.PluginSdk.Hosting;
 using VelaShell.PluginSdk.Manifest;
 using VelaShell.PluginSdk.Packaging;
+using VelaShell.PluginSdk.Versioning;
 
 namespace VelaShell.Plugin.Cli;
 
@@ -265,7 +266,19 @@ internal static partial class Program
                 Console.WriteLine($"  {plugin.Manifest.Id,-32} {plugin.Manifest.Version,-14} skipped: {ex.Message}");
                 continue;
             }
-            if (!IsOlder(plugin.Manifest.Version, latest.Version))
+            if (IsNewer(latest.Version, plugin.Manifest.Version) is not { } newer)
+            {
+                // 比不出先后(多半是清单校验收紧之前发出去的 1.0.0-beta.01 这类写法):不猜,说清楚怎么办。
+                // 宿主插件管理页改用 SemanticVersion 之后,这种情况同样判「比不出 → 不报有更新」。
+                bool installedIsValid = SemanticVersion.TryParse(plugin.Manifest.Version, out _);
+                Console.WriteLine($"  {plugin.Manifest.Id,-32} {plugin.Manifest.Version,-14} skipped: "
+                                  + (installedIsValid
+                                      ? $"the marketplace version '{latest.Version}' is not a valid SemVer version, so it cannot be compared."
+                                      : $"the installed version is not a valid SemVer version, so it cannot be compared with {latest.Version}; "
+                                        + $"run `vela-plugin install {plugin.Manifest.Id}` to replace it."));
+                continue;
+            }
+            if (!newer)
             {
                 continue;
             }
@@ -328,6 +341,10 @@ internal static partial class Program
     /// <summary>
     /// 选一个版本:钉了就必须有那一个;没钉则取**最高的正式版**,没有正式版才回落到预发布。
     /// 默认跳过预发布与 npm 的 <c>@latest</c> 同理 —— 发了个 preview 不该让所有人跟着升。
+    /// <para>
+    /// 排序用 SDK 的 <see cref="SemanticVersion.TextComparer" />(与商店、宿主同一份):完整 SemVer 优先级,
+    /// <c>beta.2 &lt; beta.10</c>;解析不出的版本当最旧,所以只要还有合法版本,就不会被挑成「最新」。
+    /// </para>
     /// </summary>
     internal static MarketVersion SelectVersion(MarketPlugin plugin, string? pinned, bool allowPrerelease)
     {
@@ -341,10 +358,13 @@ internal static partial class Program
                    ?? throw new CliException($"{plugin.Id} has no version '{pinned}'. Available: "
                                              + string.Join(", ", plugin.Versions.Select(v => v.Version)));
         }
-        MarketVersion[] ordered = [.. plugin.Versions.OrderByDescending(v => v.Version, VersionOrder.Instance)];
+        MarketVersion[] ordered = [.. plugin.Versions.OrderByDescending(v => v.Version, SemanticVersion.TextComparer)];
+        // 「正式版」= 能解析且不带预发布后缀。只看有没有 '-' 的话,解析不出的写法(如超出 int 的数字段)
+        // 会被当成正式版,压过排在它前面的合法预发布。
         return allowPrerelease
             ? ordered[0]
-            : ordered.FirstOrDefault(v => !v.Version.Contains('-', StringComparison.Ordinal)) ?? ordered[0];
+            : ordered.FirstOrDefault(v => SemanticVersion.TryParse(v.Version, out SemanticVersion parsed) && !parsed.IsPreRelease)
+              ?? ordered[0];
     }
 
     // ---- 小工具 -----------------------------------------------------------
