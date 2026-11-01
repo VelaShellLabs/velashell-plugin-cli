@@ -375,7 +375,3 @@ FodyWeavers.xsd
 # MSIX 打包中间产物与产出(build/msix/Build-Msix.ps1)
 dist/
 out/
-
-# 本地联调用的上游包(见 nuget.config)。目录本身要保留,内容不入库。
-local-packages/*
-!local-packages/.gitkeep
