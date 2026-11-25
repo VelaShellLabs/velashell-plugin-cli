@@ -5,7 +5,7 @@
 ## 一、开工前必读:velashell-docs
 
 VelaShell 生态的**全部文档**集中在一个仓库:
-**[VelaShellLabs/velashell-docs](https://github.com/VelaShellLabs/velashell-docs)**。
+**[VelaShell/velashell-docs](https://github.com/VelaShell/velashell-docs)**。
 本仓库**不放** `docs/`、`docs-en/` —— 设计手册、开发规范与开发文档都在那边。
 
 **在动任何代码之前**,先把下表中与你要改的部分相关的几篇读掉。跳过这一步直接改,
@@ -13,14 +13,14 @@ VelaShell 生态的**全部文档**集中在一个仓库:
 
 | 位置 | 内容 |
 | --- | --- |
-| [`zh/host/`](https://github.com/VelaShellLabs/velashell-docs/tree/main/zh/host) | 宿主分层架构与依赖方向、工程化重构蓝图、交互与界面规格、快捷键参考、设置项审计,以及 SFTP / FTP / Telnet / 串口 / Redis / S3 / 系统密钥链等可行性调研 |
-| [`zh/plugins/`](https://github.com/VelaShellLabs/velashell-docs/tree/main/zh/plugins) | 插件系统设计蓝图 01–15(进程模型、IPC 协议、权限系统、UI 扩展、威胁模型、路线图)与[进度总览 STATUS](https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/plugins/STATUS.md) |
-| [`zh/sdk/`](https://github.com/VelaShellLabs/velashell-docs/tree/main/zh/sdk) | 插件契约 SDK 参考、SDK 仓库的发版流程 |
-| [`zh/cli/`](https://github.com/VelaShellLabs/velashell-docs/tree/main/zh/cli) | `vela-plugin` 命令行手册、CLI 仓库的发版流程 |
-| [`zh/templates/`](https://github.com/VelaShellLabs/velashell-docs/tree/main/zh/templates) | 插件开发指南、打包与发布、模板仓库的发版流程 |
+| [`zh/host/`](https://github.com/VelaShell/velashell-docs/tree/main/zh/host) | 宿主分层架构与依赖方向、工程化重构蓝图、交互与界面规格、快捷键参考、设置项审计,以及 SFTP / FTP / Telnet / 串口 / Redis / S3 / 系统密钥链等可行性调研 |
+| [`zh/plugins/`](https://github.com/VelaShell/velashell-docs/tree/main/zh/plugins) | 插件系统设计蓝图 01–15(进程模型、IPC 协议、权限系统、UI 扩展、威胁模型、路线图)与[进度总览 STATUS](https://github.com/VelaShell/velashell-docs/blob/main/zh/plugins/STATUS.md) |
+| [`zh/sdk/`](https://github.com/VelaShell/velashell-docs/tree/main/zh/sdk) | 插件契约 SDK 参考、SDK 仓库的发版流程 |
+| [`zh/cli/`](https://github.com/VelaShell/velashell-docs/tree/main/zh/cli) | `vela-plugin` 命令行手册、CLI 仓库的发版流程 |
+| [`zh/templates/`](https://github.com/VelaShell/velashell-docs/tree/main/zh/templates) | 插件开发指南、打包与发布、模板仓库的发版流程 |
 
-英文镜像在 [`en/`](https://github.com/VelaShellLabs/velashell-docs/tree/main/en),与 `zh/` 同构。
-[仓库首页](https://github.com/VelaShellLabs/velashell-docs)有按「我想做什么」组织的快速入口表。
+英文镜像在 [`en/`](https://github.com/VelaShell/velashell-docs/tree/main/en),与 `zh/` 同构。
+[仓库首页](https://github.com/VelaShell/velashell-docs)有按「我想做什么」组织的快速入口表。
 
 ## 二、涉及文档的改动一律同步到 velashell-docs
 
@@ -41,7 +41,7 @@ VelaShell 生态的**全部文档**集中在一个仓库:
 
 产出**一个**包:`VelaShell.Plugin.Cli`(dotnet tool `vela-plugin`)。
 
-`VelaShell.PluginSdk.Build` 已于 2026-09-11 搬去 `VelaShellLabs/velashell-plugin-sdk`
+`VelaShell.PluginSdk.Build` 已于 2026-09-11 搬去 `VelaShell/velashell-plugin-sdk`
 —— 它决定的是插件作者**编译时看到的那份契约**,所以属于契约仓库,在那边与契约同版本发布。
 端到端冒烟(`scripts/Invoke-Smoke.ps1` + `tests/smoke/`)随它一起搬走了。
 
@@ -80,7 +80,7 @@ Avalonia 版本锁与它的构建期核对(`VELA1000` / `VELA1006`)在本仓库�
 脚本按 `-DocsRoot` → `$env:VELASHELL_DOCS` → 同级 `../velashell-docs` 找,找不到就跳过并警告。
 **改了命令行的参数、输出或行为,必须同步改 velashell-docs 的 `cli.md`(中英各一份)。**
 
-完整流程见 [`zh/cli/release-process.md`](https://github.com/VelaShellLabs/velashell-docs/blob/main/zh/cli/release-process.md)。
+完整流程见 [`zh/cli/release-process.md`](https://github.com/VelaShell/velashell-docs/blob/main/zh/cli/release-process.md)。
 
 ### 留在本仓库的文档
 
@@ -88,4 +88,4 @@ Avalonia 版本锁与它的构建期核对(`VELA1000` / `VELA1006`)在本仓库�
 
 ### 提交约束
 
-- **所有提交信息与 PR 描述都不要附加 Claude Code 等 AI 工具的作者信息** —— 不加 `Co-Authored-By: Claude …` 行,也不加 `🤖 Generated with Claude Code` 之类的署名。VelaShellLabs 下所有仓库一致适用。
+- **所有提交信息与 PR 描述都不要附加 Claude Code 等 AI 工具的作者信息** —— 不加 `Co-Authored-By: Claude …` 行,也不加 `🤖 Generated with Claude Code` 之类的署名。VelaShell 下所有仓库一致适用。

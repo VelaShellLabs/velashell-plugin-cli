@@ -5,7 +5,7 @@
 #      VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
 #
 # 2026-09-11 起 **VelaShell.PluginSdk.Build 不在本仓库发**:它搬去了
-# VelaShellLabs/velashell-plugin-sdk,在那边与契约包同版本、同一次发布。插件工程用的打包器
+# VelaShell/velashell-plugin-sdk,在那边与契约包同版本、同一次发布。插件工程用的打包器
 # 也在那边自带(VelaShell.PluginSdk.Packer,与契约同仓库、同一次构建)。
 #
 # 于是本仓库**没有任何下游**:vela-plugin 是面向人的工具(商店、开发内环、签名、体检),
@@ -13,8 +13,8 @@
 # VpxContainer(在 VelaShell.PluginSdk 里),包格式的一致性由类型保证,不靠版本号约定。
 #
 # **其余的包不在这里发**:
-#      VelaShell.PluginSdk / .Testing / .Build …… VelaShellLabs/velashell-plugin-sdk
-#      VelaShell.Plugin.Templates ………………… VelaShellLabs/velashell-plugin-templates
+#      VelaShell.PluginSdk / .Testing / .Build …… VelaShell/velashell-plugin-sdk
+#      VelaShell.Plugin.Templates ………………… VelaShell/velashell-plugin-templates
 # 三个仓库各有各的版本号。本仓库发 1.5.3 不代表契约动了,也不要求模板跟着发。
 #
 # 📌 版本号:**发版前在本地落好、随功能改动一起合进 main**。
@@ -36,7 +36,7 @@
 #   NuGet/login 拿本次运行的 GitHub OIDC 令牌去 nuget.org 换一把**短时效**的推送密钥,
 #   用完即弃。
 #   ⚠️ 首次发版前必须在 nuget.org 上为**本仓库**建一条可信发布策略:
-#        Repository owner  VelaShellLabs
+#        Repository owner  VelaShell
 #        Repository        velashell-plugin-cli
 #        Workflow file     release.yml
 #      建法见 velashell-docs 的 zh/cli/release-process.md 的「NuGet 可信发布」一节。
