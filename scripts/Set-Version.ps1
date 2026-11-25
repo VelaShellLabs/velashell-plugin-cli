@@ -8,7 +8,7 @@
 
       VelaShell.Plugin.Cli          dotnet tool `vela-plugin`
 
-    (VelaShell.PluginSdk.Build 已于 2026-09-11 搬去 VelaShellLabs/velashell-plugin-sdk,
+    (VelaShell.PluginSdk.Build 已于 2026-09-11 搬去 VelaShell/velashell-plugin-sdk,
      在那边与契约包同版本发布。理由见 Directory.Build.props 的注释。)
 
     落点三处:
@@ -18,7 +18,7 @@
       en/cli/cli.md                    version banner ┘ 是**可选**落点,见 -DocsRoot
 
     docs 那两处不影响功能,但它们是给人照抄的,过期版本号会被原样粘进别人的工程 ——
-    2026-08-30 全部文档搬到 VelaShellLabs/velashell-docs 之后,它们不在本仓库的
+    2026-08-30 全部文档搬到 VelaShell/velashell-docs 之后,它们不在本仓库的
     checkout 里,所以找不到就跳过。
 
     **注意本脚本不碰 VelaShell.PluginSdk 的引用版本。** 那是"打包器自己拿哪一版契约去读
@@ -75,7 +75,7 @@ if ($Version -notmatch '^(\d+)\.(\d+)\.(\d+)(-[0-9A-Za-z.-]+)?$') {
 $root = Split-Path -Parent $PSScriptRoot
 
 # ── velashell-docs 的位置 ────────────────────────────────────────────────────
-# 2026-08-30 起全部文档搬到 VelaShellLabs/velashell-docs,版本横幅跟着走了。那是另一个
+# 2026-08-30 起全部文档搬到 VelaShell/velashell-docs,版本横幅跟着走了。那是另一个
 # 仓库,发版 runner 的 checkout 里没有它 —— 所以文档落点是**可选**的:本地开发时两个仓库
 # 通常并排放着,找得到就一起改;找不到就在末尾提醒一句,不让流水线因为缺个兄弟仓库而红。
 if (-not $DocsRoot) {
@@ -150,7 +150,7 @@ if ($skippedDocs.Count -gt 0) {
     Write-Warning @"
 没找到 velashell-docs(试过 $DocsRoot),跳过了这几处文档里的版本横幅:
 $($skippedDocs -join [Environment]::NewLine)
-文档在 https://github.com/VelaShellLabs/velashell-docs —— 把它 clone 到本仓库同级目录,
+文档在 https://github.com/VelaShell/velashell-docs —— 把它 clone 到本仓库同级目录,
 或用 -DocsRoot / `$env:VELASHELL_DOCS 指过去,再跑一次即可一并更新。
 "@
 }

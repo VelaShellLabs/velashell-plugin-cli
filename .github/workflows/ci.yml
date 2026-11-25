@@ -3,7 +3,7 @@
 # 唯一差别是不推 nuget.org。
 #
 # 本仓库自 2026-09-11 起只产出一个包:VelaShell.PluginSdk.Build 搬去了
-# VelaShellLabs/velashell-plugin-sdk(它与契约同版本发布才对),端到端冒烟随它一起搬走,
+# VelaShell/velashell-plugin-sdk(它与契约同版本发布才对),端到端冒烟随它一起搬走,
 # 打包器也在那边自带(VelaShell.PluginSdk.Packer)。本仓库因此不再有任何下游。
 #
 # 注意本仓库**不需要任何机密**:程序集不做强名称签名(那只开在 velashell-plugin-sdk

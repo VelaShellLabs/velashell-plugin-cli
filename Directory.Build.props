@@ -21,14 +21,14 @@
       velashell-docs 的发版流程都按这个名字对接,改名只是让几处一起动一遍,换不来什么。
 
       **VelaShell.PluginSdk.Build 不再在本仓库**(2026-09-11 起):它搬去了
-      VelaShellLabs/velashell-plugin-sdk,在那边与契约包同版本、同一次发布 —— 它发给插件
+      VelaShell/velashell-plugin-sdk,在那边与契约包同版本、同一次发布 —— 它发给插件
       工程的那份契约就是那个仓库当时那一版,这正是搬过去的理由。
       那边的 .Build 自带打包器(VelaShell.PluginSdk.Packer,同仓库的一个小工程,走同一个
       VpxContainer),**不引用本仓库的任何东西**。所以两边没有任何耦合可言:本仓库只是
       vela-plugin 这一个面向人的工具,发不发版与插件工程能不能出包毫无关系。
 
       **与契约 SDK 解耦**(2026-08-27 拆库起):VelaShell.PluginSdk 在
-      VelaShellLabs/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
+      VelaShell/velashell-plugin-sdk,有自己的版本号。SDK 发 1.6.0 不要求本仓库跟着发;
       本仓库发 1.5.3 也不代表契约动了。想吃到新契约时,直接把 src/VelaShell.Plugin.Cli 里
       VelaShell.PluginSdk 的 PackageReference 版本抬上来再发一版即可 —— 走 NuGet
       (或合掉 Dependabot 的 PR)更新,**不要**抽成 MSBuild 属性:Version="$(...)"
@@ -58,9 +58,9 @@
   	<Authors>joesdu</Authors>
   	<PackagePrefix>VelaShell</PackagePrefix>
   	<RepositoryType>git</RepositoryType>
-  	<RepositoryUrl>https://github.com/VelaShellLabs/velashell-plugin-cli</RepositoryUrl>
+    <RepositoryUrl>https://github.com/VelaShell/velashell-plugin-cli</RepositoryUrl>
   	<PackageLicenseExpression>AGPL-3.0-only</PackageLicenseExpression>
-  	<PackageProjectUrl>https://github.com/VelaShellLabs/velashell-plugin-cli</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/VelaShell/velashell-plugin-cli</PackageProjectUrl>
   	<GenerateAssemblyConfigurationAttribute>True</GenerateAssemblyConfigurationAttribute>
   	<GenerateAssemblyCompanyAttribute>True</GenerateAssemblyCompanyAttribute>
   	<GenerateAssemblyProductAttribute>True</GenerateAssemblyProductAttribute>
